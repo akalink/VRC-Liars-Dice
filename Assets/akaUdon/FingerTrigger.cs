@@ -37,7 +37,7 @@ namespace akaUdon
         {
             if (other != null && other.gameObject.name.Contains(handTrackerName))
             {
-                behavior.SendCustomEvent(methodName);
+                if(behavior != null){behavior.SendCustomEvent(methodName);}
                 if (other.gameObject.name.Contains("L"))
                 {
                     Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.5f, Single.MaxValue, 0.2f);

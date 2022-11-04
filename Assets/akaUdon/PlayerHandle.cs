@@ -12,7 +12,8 @@ namespace akaUdon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerHandle : UdonSharpBehaviour
     {
-         
+        #region Instance Variables
+        
         
         private int playerNum;
         private bool yourTurn = false;
@@ -24,6 +25,7 @@ namespace akaUdon
         private int firstTurnFlag = -1;
         private int dieNumber = 6;
         private int prevDieNumber = 6;
+        private bool interactDelay = true;
 
         #region UIElements
 
@@ -36,7 +38,9 @@ namespace akaUdon
         [SerializeField] private GameObject startUi;
         [SerializeField] private GameObject continueUi;
         [SerializeField] private GameObject preGameUi;
+        
         [SerializeField] private GameObject inGameUi;
+        [SerializeField] private GameObject wildIconUi;
 
 
         #endregion
@@ -45,17 +49,25 @@ namespace akaUdon
 
         private AudioSource speaker;
         [SerializeField] private AudioClip localSelection;
-        [SerializeField] private AudioClip globalSelection;
+        [SerializeField] private AudioClip globalConfirmation;
         [SerializeField] private AudioClip turnNotification;
+        private bool audioState = true;
 
+        #endregion
         #endregion
         
         //handles adding players to game
         //handles game ui   
         //greys out what you can't do
+
+        public void _SetAudioState(bool state)
+        {
+            audioState = state;
+        }
         void Start()
         {
-
+            speaker = GetComponentInChildren<AudioSource>();
+            
             diceMaster = GetComponentInParent<LiarsDiceMaster>();
             NumberCalc(0);
         }
@@ -75,19 +87,25 @@ namespace akaUdon
             playerNum = num;
         }
         
-        public int GetPlayerNumber()
+        public int _GetPlayerNumber()
         {
             return playerNum;
         }
         
         public void _SetOwner(int id)
         {
+            VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
             if (owner == null)
             {
-                VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
+                
                 owner = player;
                 joinUi.SetActive(false);
                 leaveUi.SetActive(true);
+            }
+            else if (owner != player)
+            {
+                joinUi.SetActive(true);
+                leaveUi.SetActive(false);
             }
         }
 
@@ -134,10 +152,12 @@ namespace akaUdon
 
         #region turn display logic
 
-        public void _Turnstart(int multi, int die, int remainder)
+        public void _Turnstart(int multi, int die, int remainder, bool onesWild)
         {
-            Debug.Log("Player Handle Remainder " + remainder);
+           
+            TurnNotificationSound();
             firstTurnFlag = die; //flag that die is -1
+            wildIconUi.SetActive(onesWild);
             yourTurn = true;
             min = multi;
             multiNum = multi;
@@ -161,6 +181,45 @@ namespace akaUdon
             owner = null;
             _NotInGame();
         }
+
+        private void _LocalClickSound(float f)
+        {
+            
+            if (audioState)
+            {
+                
+                speaker.pitch = f;
+                speaker.clip = localSelection;
+                speaker.Play();
+               
+            }
+        }
+
+        public void _GlobalClickSound()
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(GlobalClickSoundNTWK));
+        }
+
+
+        public void GlobalClickSoundNTWK()
+        {
+            if (audioState)
+            {
+                speaker.pitch = 1f;
+                speaker.clip = globalConfirmation;
+                speaker.Play();
+            }
+        }
+
+        private void TurnNotificationSound()
+        {
+            if (audioState && Networking.LocalPlayer == owner)
+            {
+                speaker.pitch = 1f;
+                speaker.clip = turnNotification;
+                speaker.Play();
+            }
+        }
         #endregion
 
         #region panel visual update methods
@@ -172,6 +231,7 @@ namespace akaUdon
         
         private void HighLightButton(int num)
         {
+            
             ColorBlock block;
             Color c;
             for (int i = 0; i < numButtons.Length; i++)
@@ -227,56 +287,101 @@ namespace akaUdon
 
         #region buttonInteracts
 
+        public void InteractionDelay()
+        {
+            
+            interactDelay = true;
+        }
+
         public void _StartGame()
         {
-            if (owner == Networking.LocalPlayer)
+            if ( interactDelay && owner == Networking.LocalPlayer)
             {
+                if(yourTurn){_LocalClickSound(1f);}
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                _StartState(false);
                 diceMaster._StartGame();
             }
         }
         
         public void _ContinueGame()
         {
-            if (owner == Networking.LocalPlayer)
+            if (interactDelay && owner == Networking.LocalPlayer)
             {
+                if(yourTurn){_LocalClickSound(1f);}
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                continueUi.SetActive(false);
                 diceMaster._ContinueGame();
             }
         }
         public void _Join()
         {
-            if (owner == null)
+            if (interactDelay && owner == null)
             {
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                _LocalClickSound(1.1f);
                 diceMaster._Join(playerNum);
+                joinUi.SetActive(false);
+                leaveUi.SetActive(true);
             }
         }
         public void _Leave()
         {
-            if (owner == Networking.LocalPlayer)
+            if (interactDelay && owner == Networking.LocalPlayer)
             {
-                
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                _LocalClickSound(0.9f);
                 diceMaster._Leave();
+                joinUi.SetActive(true);
+                leaveUi.SetActive(false);
             }   
+        }
+
+        public void _Rules()
+        {
+            diceMaster._ShowRules();
         }
 
         public void _Submit()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (interactDelay && owner == Networking.LocalPlayer && yourTurn)
             {
                 if (dieNumber < 0) { return;}
                 
                 if (multiNum > min || dieNumber > prevDieNumber)
                 {
-                    Debug.Log("Fullfilled submit criteria");
+                    //disable button
+                    ColorBlock block;
+                    Color c;
+                    c = Color.gray;
+                    block = otherButtons[2].colors;
+                    block.normalColor = c;
+                    block.selectedColor = c;
+                    otherButtons[2].colors = block;
+                    //end disable
+                    interactDelay = false;
+                    SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                    _LocalClickSound(1.1f);
+                    
                     diceMaster._PlayerSubmitBid(multiNum, dieNumber);
+                    
                 }
             }
         }
 
         public void _Contest() //Call it button
         {
-            if (owner == Networking.LocalPlayer && yourTurn && firstTurnFlag > -1)
+            if (interactDelay && owner == Networking.LocalPlayer && yourTurn && firstTurnFlag > -1)
             {
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                _LocalClickSound(0.9f);
                 diceMaster._PlayerContests();
+                yourTurn = false;
             }
         }
 
@@ -294,6 +399,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 NumberCalc(1);
             }
         }
@@ -302,6 +408,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 NumberCalc(-1);
             }
         }
@@ -311,6 +418,7 @@ namespace akaUdon
         public void _ChooseOne() {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 0;
                 HighLightButton(0);
             }
@@ -320,6 +428,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 1;
                 HighLightButton(1);
             }
@@ -329,6 +438,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 2;
                 HighLightButton(2);
             }
@@ -338,6 +448,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 3;
                 HighLightButton(3);
             }
@@ -347,6 +458,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 4;
                 HighLightButton(4);
             }
@@ -356,6 +468,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
+                _LocalClickSound(1f);
                 dieNumber = 5;
                 HighLightButton(5);
             }
