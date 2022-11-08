@@ -35,7 +35,7 @@ namespace akaUdon
         void Start()
         {
             collision = GetComponent<Collider>();
-            collision.enabled = false;
+            
             if (Networking.LocalPlayer == null)
             {
                 isNull = true;
@@ -58,8 +58,7 @@ namespace akaUdon
                 }
                 LoggerPrint("VR and bone check returned " + allowVRHandCollision);
             }
-            
-            if (!allowVRHandCollision)
+            else
             {
                 trackedPoints[1].gameObject.SetActive(false);
                 trackedPoints[2].gameObject.SetActive(false);
@@ -68,7 +67,7 @@ namespace akaUdon
         }
         
 
-        public bool _Checkbones()
+        private bool _Checkbones()
         {
             bool returnIfAssigned = false;
             if ((LocalPlayer.GetBonePosition(HumanBodyBones.RightIndexDistal) != Vector3.zero) ||
@@ -98,23 +97,23 @@ namespace akaUdon
 
         public override void OnPlayerTriggerEnter(VRCPlayerApi player)
         {
-            if (player == Networking.LocalPlayer && Networking.LocalPlayer.IsUserInVR())
+            if (player == Networking.LocalPlayer)// && Networking.LocalPlayer.IsUserInVR())
             {
                 insideArea = true;
                 trackedPoints[1].gameObject.SetActive(true);
                 trackedPoints[2].gameObject.SetActive(true);
-                collision.enabled = true;
+                //collision.enabled = true;
             }
         }
 
         public override void OnPlayerTriggerExit(VRCPlayerApi player)
         {
-            if (player == Networking.LocalPlayer && Networking.LocalPlayer.IsUserInVR())
+            if (player == Networking.LocalPlayer)// && Networking.LocalPlayer.IsUserInVR())
             {
                 insideArea = false;
                 trackedPoints[1].gameObject.SetActive(false);
                 trackedPoints[2].gameObject.SetActive(false);
-                collision.enabled = false;
+                //collision.enabled = false;
             }
         }
 

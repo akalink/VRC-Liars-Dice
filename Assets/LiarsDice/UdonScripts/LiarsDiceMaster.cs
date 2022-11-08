@@ -300,7 +300,6 @@ namespace akaUdon
         {
             if (Networking.IsMaster)
             {
-                playerHandles[playingPlayer]._GlobalClickSound();
                 currentMulti = multi;
                 currentDie = die;
                 NextTurn();
@@ -596,7 +595,6 @@ namespace akaUdon
 
                 numJoinedPlayers++;
                 currentPlayers[playerNum] = player.playerId;
-                playerHandles[playerNum]._GlobalClickSound();
 
                 RequestSerialization();
                 AllDeserialization();
@@ -615,7 +613,6 @@ namespace akaUdon
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
                         playerHandles[i]._LeaveSetter();
-                        playerHandles[i]._GlobalClickSound();
                         RequestSerialization();
                         AllDeserialization();
                         return;

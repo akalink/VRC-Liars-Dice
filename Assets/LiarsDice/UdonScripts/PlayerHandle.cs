@@ -20,7 +20,6 @@ namespace akaUdon
      */
     /*
      * TODO naming consistency
-     * TODO Remove Unusable network calls
      * TODO class name needs a better name
      */
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -201,7 +200,6 @@ namespace akaUdon
             
             if (audioState)
             {
-                
                 speaker.pitch = f;
                 speaker.clip = localSelection;
                 speaker.Play();
@@ -209,21 +207,11 @@ namespace akaUdon
             }
         }
 
-        public void _GlobalClickSound()
+        public void _AltClickSound()
         {
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(GlobalClickSoundNTWK));
+            
         }
-
-
-        public void GlobalClickSoundNTWK()
-        {
-            if (audioState)
-            {
-                speaker.pitch = 1f;
-                speaker.clip = globalConfirmation;
-                speaker.Play();
-            }
-        }
+        
 
         private void TurnNotificationSound()
         {
@@ -288,11 +276,13 @@ namespace akaUdon
             }
         }
         
-        private void NumberCalc(int num) //todo, I should make max equal the total amount of remaining dice
+        private void NumberCalc(int num)
         {
             if (multiNum + num >= min && (multiNum + num <= max))
             {
+                
                 multiNum += num;
+               if(yourTurn){_LocalClickSound(multiNum/10 + 0.9f);}
                 UpdateMultiDisplay();
                 HighLightButton(dieNumber);
             } 
@@ -414,7 +404,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                
                 NumberCalc(1);
             }
         }
@@ -423,7 +413,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                
                 NumberCalc(-1);
             }
         }
