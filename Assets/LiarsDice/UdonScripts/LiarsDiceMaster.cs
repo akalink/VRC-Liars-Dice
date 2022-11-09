@@ -133,8 +133,7 @@ namespace akaUdon
                 
             }
             
-            Randomize(); 
-            //UpdateText("Liar's Dice");
+            Randomize();
             AllDeserialization();
         }
         #endregion
