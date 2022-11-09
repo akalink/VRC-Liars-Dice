@@ -2705,9 +2705,9 @@ MonoBehaviour:
   preGameUi: {fileID: 4913210496396045968}
   inGameUi: {fileID: 305478433573281813}
   wildIconUi: {fileID: 5625936908612237710}
-  localSelection: {fileID: 8300000, guid: e4026093219df4b4e8a4cdbe1a64af60, type: 3}
-  globalConfirmation: {fileID: 8300000, guid: 587a5894f851a76468159f314b90cb25, type: 3}
-  turnNotification: {fileID: 8300000, guid: f3d92ba758e566d4e9d164f3c07bef6e, type: 3}
+  localSelectionSfx: {fileID: 8300000, guid: e4026093219df4b4e8a4cdbe1a64af60, type: 3}
+  altSelectionSfx: {fileID: 0}
+  turnNotificationSfx: {fileID: 8300000, guid: f3d92ba758e566d4e9d164f3c07bef6e, type: 3}
 --- !u!114 &305478433961273435
 MonoBehaviour:
   m_ObjectHideFlags: 0

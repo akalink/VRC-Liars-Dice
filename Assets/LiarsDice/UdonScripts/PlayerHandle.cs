@@ -61,9 +61,9 @@ namespace akaUdon
         #region sfx
 
         private AudioSource speaker;
-        [SerializeField] private AudioClip localSelection;
-        [SerializeField] private AudioClip globalConfirmation;
-        [SerializeField] private AudioClip turnNotification;
+        [SerializeField] private AudioClip localSelectionSfx;
+        [SerializeField] private AudioClip altSelectionSfx;
+        [SerializeField] private AudioClip turnNotificationSfx;
         private bool audioState = true;
 
         #endregion
@@ -87,7 +87,12 @@ namespace akaUdon
 
         public void _SetPlayerNameUI()
         {
-            if (owner != null) { playerNameDisplay.text = owner.displayName;}
+            Debug.Log("Station " + playerNum + " is given a user");
+            if (owner != null)
+            {
+                playerNameDisplay.text = owner.displayName;
+                Debug.Log("Player is assigned");
+            }
         }
 
         public void _ClearPlayerNameUI()
@@ -198,16 +203,16 @@ namespace akaUdon
         private void _LocalClickSound(float f)
         {
             
-            if (audioState)
+            if (audioState && localSelectionSfx != null)
             {
                 speaker.pitch = f;
-                speaker.clip = localSelection;
+                speaker.clip = localSelectionSfx;
                 speaker.Play();
                
             }
         }
 
-        public void _AltClickSound()
+        private void _AltClickSound(float f) // todo implement
         {
             
         }
@@ -215,10 +220,10 @@ namespace akaUdon
 
         private void TurnNotificationSound()
         {
-            if (audioState && Networking.LocalPlayer == owner)
+            if (audioState && Networking.LocalPlayer == owner && turnNotificationSfx != null && speaker != null)
             {
                 speaker.pitch = 1f;
-                speaker.clip = turnNotification;
+                speaker.clip = turnNotificationSfx;
                 speaker.Play();
             }
         }

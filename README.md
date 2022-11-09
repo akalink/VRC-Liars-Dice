@@ -5,9 +5,10 @@
 - [CyanPlayerObjectPool](https://github.com/CyanLaser/CyanPlayerObjectPool)
 
 ### Instructions
-- Download and Import the dependencies to your World's Unity Project.
-- Download the Import the unity package (do not clone this repo)
-- Drag the Prefab file included in the package into your scene.
+1. Download and Import the dependencies to your World's Unity Project (listed above).
+2. Download the Import the unity package (do not clone this repo)
+3. There are two necceary Prefab files required. Drag both the PlayObjectAssigner Prefab and the Liar's Dice Table into your scene.
+4. You're done!
 
 
 ### Credits

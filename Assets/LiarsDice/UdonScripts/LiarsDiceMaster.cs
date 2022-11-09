@@ -94,7 +94,6 @@ namespace akaUdon
             playerHandles = GetComponentsInChildren<PlayerHandle>(true);
             canvasColliders = new Collider[playerHandles.Length];
             fingerColliders = new Collider[tempColliders.Length - playerHandles.Length];
-            Debug.Log("temp colliders array length " + tempColliders.Length);
             currentPlayers = new int[playerHandles.Length];
             remaining = new int[playerHandles.Length];
             bool inVR = Networking.LocalPlayer.IsUserInVR();
@@ -116,8 +115,7 @@ namespace akaUdon
                     tempIndexFinger++;
                 }
             }
-            Debug.Log("Finger colliders length " + fingerColliders.Length + " tempFinger " + tempIndexFinger);
-            
+
             diceMesh = GetComponentsInChildren<Renderer>();
             dieValues = new int[diceMesh.Length];
             for (int i = 0; i < currentPlayers.Length; i++) //initializes array of player ids to known value
@@ -136,8 +134,8 @@ namespace akaUdon
             }
             
             Randomize(); 
-        
-            //AllDeserialization();
+            //UpdateText("Liar's Dice");
+            AllDeserialization();
         }
         #endregion
         #region settings methods
@@ -157,6 +155,7 @@ namespace akaUdon
         }
         public void _OnesWild()
         {
+            onesWildStateVisual.SetActive(!onesWild);
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnesWildNetwork));
         }
 
@@ -172,7 +171,6 @@ namespace akaUdon
         
         public void _ToggleInteractMethod()
         {
-            Debug.Log("Toggled FT to " + !toggleFTState);
             if (Networking.LocalPlayer.IsUserInVR())
             {
                 toggleFTState = !toggleFTState;
@@ -259,7 +257,6 @@ namespace akaUdon
         public void _StartGame()
         {
             if(!canInteract){return;}
-            Debug.Log("Clicked start game");
             if (numJoinedPlayers > 1)
             {
                 SendCustomNetworkEvent(NetworkEventTarget.All, nameof(InitializeGame));
@@ -330,7 +327,7 @@ namespace akaUdon
                         
                         if (remaining[i] > 0 && currentPlayers[i] != -1)
                         {
-                            Debug.Log("Remining " + i + " " + remaining[i]);
+                            
                             lastWinner = currentPlayers[i];
                         }
                         currentPlayers[i] = -1;
@@ -356,7 +353,7 @@ namespace akaUdon
 
         public void GameEndSound()
         {
-            if (audioState)
+            if (audioState && gameEndSfx != null && speaker != null)
             {
                 speaker.pitch = 1f;
                 speaker.clip = gameEndSfx;
@@ -525,7 +522,7 @@ namespace akaUdon
 
         private void LiarFoundSound()
         {
-            if (audioState)
+            if (audioState && LiarContestSfx != null && speaker != null)
             {
                 speaker.pitch = 1f;
                 speaker.clip = LiarContestSfx;
@@ -535,7 +532,7 @@ namespace akaUdon
 
         private void TruthFoundSound()
         {
-            if (audioState)
+            if (audioState && TruthContestSfx != null && speaker != null)
             {
                 speaker.pitch = 1f;
                 speaker.clip = TruthContestSfx;
@@ -560,9 +557,8 @@ namespace akaUdon
         
         public void _Join(int playerNum)
         {
-            if (Utilities.IsValid(_localPoolObject) && !gameStarted) // check if valid aka someone is assigned it
+            if (Utilities.IsValid(_localPoolObject) && !gameStarted)
             {
-                Debug.Log("Playing attempting to join " + playerNum);
                 _localPoolObject._SetValue(playerNum);
                 _localPoolObject._JoinGame();
             }
@@ -660,14 +656,18 @@ namespace akaUdon
 
         private void AllDeserialization()
         {
-
             Debug.Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
+            
+            
+            onesWildStateVisual.SetActive(onesWild);
+            SetOnesWild();
             UpdateUIState();
-            UpdateText();
+            UpdateText("Liar's Dice");
+            diceLeft = 0;
             UpdateMesh();
         }
 
-        private void UpdateUIState()
+        private void SetOnesWild()
         {
             if (onesWild)
             {
@@ -675,23 +675,29 @@ namespace akaUdon
                 {
                     onesInvalid = true;
                 }
-                else if(currentDie == -1)
+                else if(currentDie == -1) //reset validity since -1 means a new turn
                 {
                     onesInvalid = false;
                 }
-            }   
+            }      
+        }
+
+        private void UpdateUIState()
+        {
+            ///looped section
             for (int i = 0; i < currentPlayers.Length; i++)
             {
                 playerHandles[i]._ContinueState(false);
                 if (currentPlayers[i] != -1)
                 {
+                    
                     if (!gameStarted && numJoinedPlayers > 1)
                     {
                         playerHandles[i]._StartState(true);
                     }
 
                     playerHandles[i]._SetOwner(currentPlayers[i]);
-
+                    playerHandles[i]._SetPlayerNameUI();
 
                     if (currentPlayers[i] == Networking.LocalPlayer.playerId)
                     {
@@ -714,24 +720,14 @@ namespace akaUdon
                 {
                     playerHandles[i]._LeaveSetter();
                     playerHandles[i]._StartState(false);
-                }
-            }
-        }
-
-        private void UpdateText()
-        {
-            string listPlayers = "Liar's Dice";
-            for (int i = 0; i < currentPlayers.Length; i++)
-            {
-                if (currentPlayers[i] != -1)
-                {
-                    playerHandles[i]._SetPlayerNameUI();
-                }
-                else
-                {
                     playerHandles[i]._ClearPlayerNameUI();
                 }
             }
+            //end loop
+        }
+
+        private void UpdateText(string listPlayers)
+        {
 
             if (!gameStarted)
             {
@@ -789,8 +785,8 @@ namespace akaUdon
 
         private void UpdateMesh()
         {
-            diceLeft = 0;
-            onesWildStateVisual.SetActive(onesWild);
+
+            //loop
             for (int i = 0; i < dieValues.Length; i++)
             {
                 if (i < diceMesh.Length && diceMesh[i] != null)
@@ -827,7 +823,7 @@ namespace akaUdon
                     }
                 }
             }
-            Debug.Log("Dice Left " + diceLeft);
+            //end loop
         }
                 
 
