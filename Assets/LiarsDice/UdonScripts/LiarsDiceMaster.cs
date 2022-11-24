@@ -80,8 +80,8 @@ namespace akaUdon
         #endregion
 
         //from cyan object pool
-        public CyanPlayerObjectAssigner objectPool;
-        private PooledObject _localPoolObject;
+        //public CyanPlayerObjectAssigner objectPool;
+        //private PooledObject _localPoolObject;
         
         #endregion
 
@@ -253,22 +253,32 @@ namespace akaUdon
 
         #region game logic
         
-        public void _StartGame()
+       /*public void _StartGame()
         {
             if(!canInteract){return;}
             if (numJoinedPlayers > 1)
             {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(InitializeGame));
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(_InitializeGame));
             }
-        }
+        }*/
 
         public void _ContinueGame()
         {
             if(!canInteract){return;}
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(NewRound));
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(_NewRound));
         }
 
-        public void InitializeGame()
+        public bool _GetCanInteract()
+        {
+            return canInteract;
+        }
+
+        public int _GetNumJoinedPlayers()
+        {
+            return numJoinedPlayers;
+        }
+
+        public void _InitializeGame()
         {
             if (Networking.IsMaster)
             {
@@ -279,10 +289,10 @@ namespace akaUdon
                 {
                     remaining[i] = 5;
                 }
-                NewRound();
+                _NewRound();
             }
         }
-        public void NewRound()
+        public void _NewRound()
         {
             if (Networking.IsMaster)
             {
@@ -292,7 +302,7 @@ namespace akaUdon
             }
         }
 
-        public void ReceiveValues(int multi, int die)
+        public void _ReceiveBid(int multi, int die)
         {
             if (Networking.IsMaster)
             {
@@ -369,17 +379,18 @@ namespace akaUdon
             
         }
 
-        public void _PlayerSubmitBid(int multi, int die)
+        /*public void _PlayerSubmitBid(int multi, int die)
         {
             _localPoolObject._SetMultiDie(multi, die);
-        }
+        }*/
 
         public void _PlayerContests()
         {
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Contest));
+           //SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Contest));
+           /*
         }
-        public void Contest()
-        {
+        private void Contest()
+        {*/
             int lastPlayer = playingPlayer;
 
             do
@@ -543,7 +554,7 @@ namespace akaUdon
         
         #region player Involement logic
         
-        [PublicAPI] //cyan object pool dependency
+        /*[PublicAPI] //cyan object pool dependency
         public void _OnLocalPlayerAssigned()
         {
 
@@ -554,25 +565,26 @@ namespace akaUdon
             DisableInteractive = false;
         }
         
-        public void _Join(int playerNum)
+       / public void _Join(int playerNum)
         {
-            if (Utilities.IsValid(_localPoolObject) && !gameStarted)
+            if (!gameStarted)
             {
                 _localPoolObject._SetValue(playerNum);
                 _localPoolObject._JoinGame();
             }
-        }
+        }/
 
-        public void _Leave()
+        /*public void _Leave(int playerNum)
         {
             if (Utilities.IsValid(_localPoolObject)) // check if valid
             {
                 _localPoolObject._RemoveGame();
             }
-        }
+        }*/
 
-        public void AddPlayerToGame(VRCPlayerApi player, int playerNum)
+        public void _AddPlayerToGame(VRCPlayerApi player, int playerNum)
         {
+            Debug.Log("A user has requested to join the game");
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
                 
@@ -581,13 +593,14 @@ namespace akaUdon
                     
                     if (id == player.playerId) // return already if assigned
                     {
+                        Debug.Log("The player is already in the game");
                         RequestSerialization();
                         AllDeserialization();
                         return;
                     }
                 }
                 
-
+                Debug.Log("Adding the player to the game");
                 numJoinedPlayers++;
                 currentPlayers[playerNum] = player.playerId;
 
@@ -596,15 +609,17 @@ namespace akaUdon
             }
         }
         
-        public void RemovePlayerFromGame(VRCPlayerApi player)
+        public void _RemovePlayerFromGame(VRCPlayerApi player)
         {
-            
+            Debug.Log("A player has requested to be removed from the game");
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
+                Debug.Log("Removing player " + player.displayName);
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
                     if (currentPlayers[i] == player.playerId)
                     {
+                        Debug.Log("The player is being removed from the game");
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
                         playerHandles[i]._LeaveSetter();
@@ -717,6 +732,7 @@ namespace akaUdon
                 }
                 else
                 {
+                    Debug.Log("#" + i+" station is being turned off");
                     playerHandles[i]._LeaveSetter();
                     playerHandles[i]._StartState(false);
                     playerHandles[i]._ClearPlayerNameUI();

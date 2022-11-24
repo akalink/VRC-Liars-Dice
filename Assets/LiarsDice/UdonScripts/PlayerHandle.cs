@@ -22,13 +22,18 @@ namespace akaUdon
      * TODO naming consistency
      * TODO class name needs a better name
      */
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+
+
     public class PlayerHandle : UdonSharpBehaviour
     {
         #region Instance Variables
+
+        [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice;
+        [UdonSynced()] private int[] synchValues = new int[] {0, 0}; //0: multiplyer, 1: face value
         
         
-        private int playerNum;
+        private int stationNum;
         private bool yourTurn = false;
         private VRCPlayerApi owner;
         private LiarsDiceMaster diceMaster;
@@ -87,7 +92,7 @@ namespace akaUdon
 
         public void _SetPlayerNameUI()
         {
-            Debug.Log("Station " + playerNum + " is given a user");
+            Debug.Log("Station " + stationNum + " is given a user");
             if (owner != null)
             {
                 playerNameDisplay.text = owner.displayName;
@@ -102,26 +107,28 @@ namespace akaUdon
 
         public void _SetPlayerNumber(int num)
         {
-            playerNum = num;
+            stationNum = num;
         }
         
         public int _GetPlayerNumber()
         {
-            return playerNum;
+            return stationNum;
         }
         
         public void _SetOwner(int id)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
+            Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
             if (owner == null)
             {
-                
+                Debug.Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
                 owner = player;
                 joinUi.SetActive(false);
                 leaveUi.SetActive(true);
             }
             else if (owner != player)
             {
+                Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " but the station is already assigned");
                 joinUi.SetActive(true);
                 leaveUi.SetActive(false);
             }
@@ -131,6 +138,11 @@ namespace akaUdon
         //called from LiarsDiceMaster
         public void _LeaveSetter()
         {
+            if (owner != null)
+            {
+                Debug.Log(owner.displayName + "the owner of station #" + stationNum + "is abandoning the station");
+            }
+
             owner = null;
             joinUi.SetActive(true);
             leaveUi.SetActive(false);
@@ -296,7 +308,7 @@ namespace akaUdon
 
         #region buttonInteracts
 
-        public void InteractionDelay()
+        public void _InteractionDelay()
         {
             
             interactDelay = true;
@@ -304,13 +316,17 @@ namespace akaUdon
 
         public void _StartGame()
         {
-            if ( interactDelay && owner == Networking.LocalPlayer)
+            if ( interactDelay && owner == Networking.LocalPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
             {
+                Debug.Log("You have clicked the start button");
                 if(yourTurn){_LocalClickSound(1f);}
                 interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _StartState(false);
-                diceMaster._StartGame();
+                //diceMaster._StartGame();
+                task = 5;
+                RequestSerialization();
+                AllDeserializtaion();
             }
         }
         
@@ -320,34 +336,60 @@ namespace akaUdon
             {
                 if(yourTurn){_LocalClickSound(1f);}
                 interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 continueUi.SetActive(false);
-                diceMaster._ContinueGame();
+                task = 6;
+                RequestSerialization();
+                AllDeserializtaion();
+                //diceMaster._ContinueGame();
             }
         }
         public void _Join()
         {
             if (interactDelay && owner == null)
             {
+                Debug.Log("You have requested to join the game on station #" + stationNum);
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
                 interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(1.1f);
-                diceMaster._Join(playerNum);
-                joinUi.SetActive(false);
-                leaveUi.SetActive(true);
+                /*if (Networking.LocalPlayer.IsOwner(gameObject))
+                {*/
+                    joinUi.SetActive(false);
+                    leaveUi.SetActive(true);
+
+                    task = 1;
+                    RequestSerialization();
+                    AllDeserializtaion();
+                //}
             }
         }
+
+       /* public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if(player != Networking.LocalPlayer){return;}
+            joinUi.SetActive(false);
+            leaveUi.SetActive(true);
+                
+            task = 1;
+            RequestSerialization();
+            AllDeserializtaion();
+        }*/
+
         public void _Leave()
         {
             if (interactDelay && owner == Networking.LocalPlayer)
             {
+                Debug.Log("You have requested to leave the game");
                 interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(0.9f);
-                diceMaster._Leave();
                 joinUi.SetActive(true);
                 leaveUi.SetActive(false);
                 startUi.SetActive(false);
+                task = 2;
+                RequestSerialization();
+                AllDeserializtaion();
             }   
         }
 
@@ -374,10 +416,14 @@ namespace akaUdon
                     otherButtons[2].colors = block;
                     //end disable
                     interactDelay = false;
-                    SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                    SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                     _LocalClickSound(1.1f);
+                    synchValues[0] = multiNum;
+                    synchValues[1] = dieNumber;
+                    task = 3;
                     
-                    diceMaster._PlayerSubmitBid(multiNum, dieNumber);
+                    RequestSerialization();
+                    AllDeserializtaion();
                     
                 }
             }
@@ -388,10 +434,14 @@ namespace akaUdon
             if (interactDelay && owner == Networking.LocalPlayer && yourTurn && firstTurnFlag > -1)
             {
                 interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(InteractionDelay), 30);
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(0.9f);
-                diceMaster._PlayerContests();
+                //diceMaster._PlayerContests();
                 yourTurn = false;
+                task = 4;
+                RequestSerialization();
+                AllDeserializtaion();
+                ;
             }
         }
 
@@ -484,6 +534,47 @@ namespace akaUdon
             }
         }
         #endregion
+        #endregion
+
+        #region synching
+
+        public override void OnDeserialization()
+        {
+            Debug.Log("Deseralization requested on station #"+stationNum);
+            AllDeserializtaion();
+        }
+
+        private void AllDeserializtaion()
+        {
+            Debug.Log("Running a Task, task #"+task);
+            switch (task)
+            {
+                case 0 : return;
+                
+                case 1 : //claim station for yourself
+                    if(owner == null){diceMaster._AddPlayerToGame(Networking.GetOwner(gameObject), stationNum);} //TODO, do ui toggling in here, have it reverse decisions in master script
+                    break;
+                case 2: //leave station
+                    if(owner != null){diceMaster._RemovePlayerFromGame(owner);}
+                    break;
+                case 3: //sends dice values to master
+                    diceMaster._ReceiveBid(synchValues[0], synchValues[1]);
+                    break;
+                case 4 : //contests bid
+                    diceMaster._PlayerContests();
+                    break;
+                case 5 : //starts the game
+                    diceMaster._InitializeGame();
+                    break;
+                case 6: //continues the game
+                    diceMaster._NewRound();
+                    break;
+            }
+
+            //task = 0;
+
+        }
+
         #endregion
     }
 }

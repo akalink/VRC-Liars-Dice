@@ -77,7 +77,7 @@ namespace akaUdon
 
         public void SendMutliDie()
         {
-            liarDice.ReceiveValues(multiValue, dieValue);
+           // liarDice.ReceiveValues(multiValue, dieValue);
         }
         
         private void _OnValueChanged()
@@ -107,7 +107,7 @@ namespace akaUdon
 
         public void JoiningGame()
         {
-            liarDice.AddPlayerToGame(Owner, value);
+           // liarDice.AddPlayerToGame(Owner, value);
         }
 
         public void _RemoveGame()
@@ -117,7 +117,7 @@ namespace akaUdon
 
         public void RemovingGame()
         {
-            liarDice.RemovePlayerFromGame(Owner);
+           // liarDice.RemovePlayerFromGame(Owner);
         }
         
     }
