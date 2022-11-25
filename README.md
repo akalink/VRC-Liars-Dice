@@ -12,8 +12,8 @@
 
 
 ### Credits
-- 🦎 akalink: Primary Liar's Dice Developer
-- ⚗️ Cyanlaser: CyanPlayerObjectPool (ObjectPool Prefab used in prototyping)
-- 🧝‍♀️ orels1: TMP Billboard Shader
-- 🧙 Merlin: UdonSharp
-- 😼 Centauri: General Help/Feedback/Testing
+- [🦎](https://github.com/akalink) akalink: Primary Liar's Dice Developer
+- [⚗️](https://github.com/CyanLaser) Cyanlaser: CyanPlayerObjectPool (ObjectPool Prefab used in prototyping)
+- [🧝‍](https://github.com/orels1) orels1: TMP Billboard Shader
+- [🧙](https://github.com/MerlinVR/UdonSharp) Merlin: UdonSharp
+- [😼](https://github.com/Centauri2442) Centauri: General Help/Feedback/Testing
