@@ -1,16 +1,18 @@
 ﻿
+using System;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common.Interfaces;
+using Random = UnityEngine.Random;
 
 namespace akaUdon
 {
     [AddComponentMenu("")]
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-
+    [Obsolete("The use of an object pool is no longer required")]
     public class PooledObject : UdonSharpBehaviour
     {
         [PublicAPI, HideInInspector]

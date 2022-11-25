@@ -30,18 +30,18 @@ namespace akaUdon
         #region Instance Variables
 
         [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice;
-        [UdonSynced()] private int[] synchValues = new int[] {0, 0}; //0: multiplyer, 1: face value
+        //[UdonSynced()] private int[] synchValues = new int[] {0, 0}; //0: multiplyer, 1: face value
         
         
         private int stationNum;
         private bool yourTurn = false;
         private VRCPlayerApi owner;
         private LiarsDiceMaster diceMaster;
-        private int multiNum = 1;
+        [UdonSynced()]private int multiNum = 1;
         private int min = 1;
         private int max = 20;
         private int firstTurnFlag = -1;
-        private int dieNumber = 6;
+        [UdonSynced()]private int dieNumber = 6;
         private int prevDieNumber = 6;
         private bool interactDelay = true;
 
@@ -78,6 +78,8 @@ namespace akaUdon
         //handles game ui   
         //greys out what you can't do
 
+        #region Set Logic
+        
         public void _SetAudioState(bool state)
         {
             audioState = state;
@@ -89,7 +91,6 @@ namespace akaUdon
             diceMaster = GetComponentInParent<LiarsDiceMaster>();
             NumberCalc(0);
         }
-
         public void _SetPlayerNameUI()
         {
             Debug.Log("Station " + stationNum + " is given a user");
@@ -99,22 +100,18 @@ namespace akaUdon
                 Debug.Log("Player is assigned");
             }
         }
-
         public void _ClearPlayerNameUI()
         {
             playerNameDisplay.text = "";
         }
-
         public void _SetPlayerNumber(int num)
         {
             stationNum = num;
         }
-        
         public int _GetPlayerNumber()
         {
             return stationNum;
         }
-        
         public void _SetOwner(int id)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
@@ -128,25 +125,19 @@ namespace akaUdon
             }
             else if (owner != player)
             {
-                Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " but the station is already assigned");
+                Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
                 joinUi.SetActive(true);
                 leaveUi.SetActive(false);
             }
         }
-
-        
-        //called from LiarsDiceMaster
         public void _LeaveSetter()
         {
-            if (owner != null)
-            {
-                Debug.Log(owner.displayName + "the owner of station #" + stationNum + "is abandoning the station");
-            }
-
+            if (owner != null) { Debug.Log(owner.displayName + " the owner of station #" + stationNum + " is abandoning the station"); }
             owner = null;
             joinUi.SetActive(true);
             leaveUi.SetActive(false);
         }
+        #endregion
 
         #region UI display logic
         
@@ -168,6 +159,7 @@ namespace akaUdon
         }
         #endregion
 
+        #region turn display logic
         public void _isInGame()
         {
             inGameUi.SetActive(true);
@@ -180,11 +172,8 @@ namespace akaUdon
             preGameUi.SetActive(true);
         }
 
-        #region turn display logic
-
-        public void _Turnstart(int multi, int die, int remainder, bool onesWild)
+        public void _TurnStart(int multi, int die, int remainder, bool onesWild)
         {
-           
             TurnNotificationSound();
             firstTurnFlag = die; //flag that die is -1
             wildIconUi.SetActive(onesWild);
@@ -220,13 +209,12 @@ namespace akaUdon
                 speaker.pitch = f;
                 speaker.clip = localSelectionSfx;
                 speaker.Play();
-               
             }
         }
 
-        private void _AltClickSound(float f) // todo implement
+        private void _AltClickSound(float f) 
         {
-            
+            // todo implement
         }
         
 
@@ -257,7 +245,7 @@ namespace akaUdon
             {
                 block = numButtons[i].colors;
                 c = i == num ? Color.cyan : Color.white; // if i and num are equal, assign the color cyan, if not use white
-                c = 6 == num ? Color.gray : c; //greys out every number if 6, which means not your turn. Why didn't I just use the my turn bool? that is me asking myself that question
+                c = 6 == num ? Color.gray : c; //greys out every number if 6, which means not your turn.
                 block.normalColor = c;
                 block.selectedColor = c;
                 numButtons[i].colors = block;
@@ -297,9 +285,8 @@ namespace akaUdon
         {
             if (multiNum + num >= min && (multiNum + num <= max))
             {
-                
                 multiNum += num;
-               if(yourTurn){_LocalClickSound(multiNum/10 + 0.9f);}
+                if(yourTurn){_LocalClickSound(multiNum/10 + 0.9f);}
                 UpdateMultiDisplay();
                 HighLightButton(dieNumber);
             } 
@@ -310,10 +297,9 @@ namespace akaUdon
 
         public void _InteractionDelay()
         {
-            
             interactDelay = true;
         }
-
+        #region Pre-Game Buttons
         public void _StartGame()
         {
             if ( interactDelay && owner == Networking.LocalPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
@@ -323,25 +309,9 @@ namespace akaUdon
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _StartState(false);
-                //diceMaster._StartGame();
                 task = 5;
                 RequestSerialization();
                 AllDeserializtaion();
-            }
-        }
-        
-        public void _ContinueGame()
-        {
-            if (interactDelay && owner == Networking.LocalPlayer)
-            {
-                if(yourTurn){_LocalClickSound(1f);}
-                interactDelay = false;
-                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
-                continueUi.SetActive(false);
-                task = 6;
-                RequestSerialization();
-                AllDeserializtaion();
-                //diceMaster._ContinueGame();
             }
         }
         public void _Join()
@@ -353,28 +323,11 @@ namespace akaUdon
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(1.1f);
-                /*if (Networking.LocalPlayer.IsOwner(gameObject))
-                {*/
-                    joinUi.SetActive(false);
-                    leaveUi.SetActive(true);
-
-                    task = 1;
-                    RequestSerialization();
-                    AllDeserializtaion();
-                //}
+                task = 1;
+                RequestSerialization();
+                AllDeserializtaion();
             }
         }
-
-       /* public override void OnOwnershipTransferred(VRCPlayerApi player)
-        {
-            if(player != Networking.LocalPlayer){return;}
-            joinUi.SetActive(false);
-            leaveUi.SetActive(true);
-                
-            task = 1;
-            RequestSerialization();
-            AllDeserializtaion();
-        }*/
 
         public void _Leave()
         {
@@ -384,9 +337,6 @@ namespace akaUdon
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(0.9f);
-                joinUi.SetActive(true);
-                leaveUi.SetActive(false);
-                startUi.SetActive(false);
                 task = 2;
                 RequestSerialization();
                 AllDeserializtaion();
@@ -406,29 +356,28 @@ namespace akaUdon
                 
                 if (multiNum > min || dieNumber > prevDieNumber)
                 {
-                    //disable button
-                    ColorBlock block;
-                    Color c;
-                    c = Color.gray;
-                    block = otherButtons[2].colors;
-                    block.normalColor = c;
-                    block.selectedColor = c;
-                    otherButtons[2].colors = block;
-                    //end disable
+                    { //disable button
+                        ColorBlock block;
+                        Color c;
+                        c = Color.gray;
+                        block = otherButtons[2].colors;
+                        block.normalColor = c;
+                        block.selectedColor = c;
+                        otherButtons[2].colors = block;
+                    } //end disable
                     interactDelay = false;
                     SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                     _LocalClickSound(1.1f);
-                    synchValues[0] = multiNum;
-                    synchValues[1] = dieNumber;
                     task = 3;
-                    
                     RequestSerialization();
                     AllDeserializtaion();
                     
                 }
             }
         }
+        #endregion
 
+        #region In-Game Buttons
         public void _Contest() //Call it button
         {
             if (interactDelay && owner == Networking.LocalPlayer && yourTurn && firstTurnFlag > -1)
@@ -436,30 +385,40 @@ namespace akaUdon
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(0.9f);
-                //diceMaster._PlayerContests();
                 yourTurn = false;
                 task = 4;
                 RequestSerialization();
                 AllDeserializtaion();
-                ;
+            }
+        }
+        public void _ContinueGame()
+        {
+            if (interactDelay && owner == Networking.LocalPlayer)
+            {
+                if(yourTurn){_LocalClickSound(1f);}
+                interactDelay = false;
+                SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
+                continueUi.SetActive(false);
+                task = 6;
+                RequestSerialization();
+                AllDeserializtaion();
             }
         }
 
-        public void _Reset()
-        {
-            if (owner == Networking.LocalPlayer && yourTurn)
-            {
-                multiNum = min;
-                HighLightButton(prevDieNumber); //I think this is right
-            }
-        }
+        // public void _Reset() never used, might user later
+        // {
+        //     if (owner == Networking.LocalPlayer && yourTurn)
+        //     {
+        //         multiNum = min;
+        //         HighLightButton(prevDieNumber); //I think this is right
+        //     }
+        // }
     
         
         public void _Add()
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                
                 NumberCalc(1);
             }
         }
@@ -468,7 +427,6 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                
                 NumberCalc(-1);
             }
         }
@@ -535,6 +493,7 @@ namespace akaUdon
         }
         #endregion
         #endregion
+        #endregion
 
         #region synching
 
@@ -552,13 +511,19 @@ namespace akaUdon
                 case 0 : return;
                 
                 case 1 : //claim station for yourself
+                    joinUi.SetActive(false);
+                    leaveUi.SetActive(true);
                     if(owner == null){diceMaster._AddPlayerToGame(Networking.GetOwner(gameObject), stationNum);} //TODO, do ui toggling in here, have it reverse decisions in master script
+                    
                     break;
                 case 2: //leave station
+                    joinUi.SetActive(true);
+                    leaveUi.SetActive(false);
+                    startUi.SetActive(false);
                     if(owner != null){diceMaster._RemovePlayerFromGame(owner);}
                     break;
                 case 3: //sends dice values to master
-                    diceMaster._ReceiveBid(synchValues[0], synchValues[1]);
+                    diceMaster._ReceiveBid(multiNum, dieNumber);
                     break;
                 case 4 : //contests bid
                     diceMaster._PlayerContests();

@@ -723,7 +723,7 @@ namespace akaUdon
                     
                     if (i == playingPlayer)
                     {
-                        playerHandles[i]._Turnstart(currentMulti, currentDie, diceLeft, onesWild && !onesInvalid);
+                        playerHandles[i]._TurnStart(currentMulti, currentDie, diceLeft, onesWild && !onesInvalid);
                     }
                     else
                     {
