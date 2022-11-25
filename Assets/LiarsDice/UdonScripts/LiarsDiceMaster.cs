@@ -1,12 +1,8 @@
 ﻿using System;
-using Cyan.PlayerObjectPool;
-using JetBrains.Annotations;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Windows.WebCam;
 using VRC.SDKBase;
-using VRC.Udon;
 using VRC.Udon.Common.Interfaces;
 using Random = UnityEngine.Random;
 
@@ -77,12 +73,11 @@ namespace akaUdon
         private bool audioState = true;
         [SerializeField] private GameObject audioStateVisual;
         
+        public TextMeshProUGUI logger;
+        public bool logging = false;
+        
         #endregion
 
-        //from cyan object pool
-        //public CyanPlayerObjectAssigner objectPool;
-        //private PooledObject _localPoolObject;
-        
         #endregion
 
         #region initialization
@@ -282,7 +277,8 @@ namespace akaUdon
         {
             if (Networking.IsMaster)
             {
-                Debug.Log("Starting new game with " + numJoinedPlayers + " number of players");
+                //Debug.Log("Starting new game with " + numJoinedPlayers + " number of players");
+                Log("Starting new game with " + numJoinedPlayers + " number of players");
                 gameStarted = true;
                 playingPlayer = currentPlayers.Length-1;
                 for (int i = 0; i < remaining.Length; i++)
@@ -325,7 +321,8 @@ namespace akaUdon
                         next = 0;
                     }
                 } while (currentPlayers[next] == -1 || remaining[next] < 1);
-                Debug.Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
+                //Debug.Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
+                Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
                 
                 if (numJoinedPlayers <= 1 || playingPlayer == next)
                 {
@@ -584,7 +581,8 @@ namespace akaUdon
 
         public void _AddPlayerToGame(VRCPlayerApi player, int playerNum)
         {
-            Debug.Log("A user has requested to join the game");
+            //Debug.Log("A user has requested to join the game");
+            Log("The player " + player.displayName + " has requested to join the game");
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
                 
@@ -593,14 +591,16 @@ namespace akaUdon
                     
                     if (id == player.playerId) // return already if assigned
                     {
-                        Debug.Log("The player is already in the game");
+                        //Debug.Log("The player is already in the game");
+                        Log(player.displayName + " is already in the game");
                         RequestSerialization();
                         AllDeserialization();
                         return;
                     }
                 }
                 
-                Debug.Log("Adding the player to the game");
+                //Debug.Log("Adding the player to the game");
+                Log("Adding " + player.displayName + " to the game");
                 numJoinedPlayers++;
                 currentPlayers[playerNum] = player.playerId;
 
@@ -611,15 +611,18 @@ namespace akaUdon
         
         public void _RemovePlayerFromGame(VRCPlayerApi player)
         {
-            Debug.Log("A player has requested to be removed from the game");
+            //Debug.Log("A player has requested to be removed from the game");
+            Log("The player " + player.displayName + " has requested to be removed from the game");
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
-                Debug.Log("Removing player " + player.displayName);
+                //Debug.Log("Removing player " + player.displayName);
+                Log("Removing player " + player.displayName);
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
                     if (currentPlayers[i] == player.playerId)
                     {
-                        Debug.Log("The player is being removed from the game");
+                        //Debug.Log("The player " + player.displayName + " is being removed from the game");
+                        Log("The player " + player.displayName + " is being removed from the game");
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
                         playerHandles[i]._LeaveSetter();
@@ -639,19 +642,18 @@ namespace akaUdon
                 {
                     if (currentPlayers[i] == player.playerId)
                     {
+                        Log("The player " +player.displayName + " was in the game, but left the instance, removing them from the game");
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
                         if (playingPlayer == i)
                         {
                             NextTurn();
                         }
-
                         if (numJoinedPlayers == 1)
                         {
                             numJoinedPlayers = 0;
                             NextTurn();
                         }
-                        
                         RequestSerialization();
                         AllDeserialization();
                         break;
@@ -670,7 +672,8 @@ namespace akaUdon
 
         private void AllDeserialization()
         {
-            Debug.Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
+            //Debug.Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
+            Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
             
             
             onesWildStateVisual.SetActive(onesWild);
@@ -732,7 +735,6 @@ namespace akaUdon
                 }
                 else
                 {
-                    Debug.Log("#" + i+" station is being turned off");
                     playerHandles[i]._LeaveSetter();
                     playerHandles[i]._StartState(false);
                     playerHandles[i]._ClearPlayerNameUI();
@@ -843,5 +845,20 @@ namespace akaUdon
                 
 
         #endregion
+
+        private void Log(string message)
+        {
+            if(!logging){return;}
+            
+            string m = "-" + System.DateTime.Now + "-"+ gameObject.name + "- " + message + "\n";
+            if (logger != null)
+            {
+                logger.text += m;
+            }
+            else
+            {
+                Debug.Log(m);
+            }
+        }
     }
 }

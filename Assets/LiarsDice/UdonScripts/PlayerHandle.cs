@@ -4,8 +4,6 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
-using VRC.Udon;
-using VRC.Udon.Common.Interfaces;
 
 namespace akaUdon
 {
@@ -19,8 +17,7 @@ namespace akaUdon
      * It is stateless between each turn, the script will store any information for its next turn. 
      */
     /*
-     * TODO naming consistency
-     * TODO class name needs a better name
+
      */
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 
@@ -72,6 +69,9 @@ namespace akaUdon
         private bool audioState = true;
 
         #endregion
+        
+        [HideInInspector] public TextMeshProUGUI logger;
+        [HideInInspector] public bool logging = false;
         #endregion
         
         //handles adding players to game
@@ -90,14 +90,19 @@ namespace akaUdon
             
             diceMaster = GetComponentInParent<LiarsDiceMaster>();
             NumberCalc(0);
+
+            logging = diceMaster.logging;
+            if (diceMaster.logger != null) { logger = diceMaster.logger; }
         }
         public void _SetPlayerNameUI()
         {
-            Debug.Log("Station " + stationNum + " is given a user");
+            //Debug.Log("Station " + stationNum + " is given a user");
+            Log("Station " + stationNum + " is given a user");
             if (owner != null)
             {
                 playerNameDisplay.text = owner.displayName;
-                Debug.Log("Player is assigned");
+                //Debug.Log("Player is assigned");
+                Log(owner.displayName +" is assigned station #"+ stationNum);
             }
         }
         public void _ClearPlayerNameUI()
@@ -115,24 +120,27 @@ namespace akaUdon
         public void _SetOwner(int id)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
-            Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
+            //Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
+            Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
             if (owner == null)
             {
-                Debug.Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
+                //Debug.Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
+                Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
                 owner = player;
                 joinUi.SetActive(false);
                 leaveUi.SetActive(true);
             }
             else if (owner != player)
             {
-                Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
+                //Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
+                Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
                 joinUi.SetActive(true);
                 leaveUi.SetActive(false);
             }
         }
         public void _LeaveSetter()
         {
-            if (owner != null) { Debug.Log(owner.displayName + " the owner of station #" + stationNum + " is abandoning the station"); }
+            if (owner != null) { Log(owner.displayName + " the owner of station #" + stationNum + " is abandoning the station"); }
             owner = null;
             joinUi.SetActive(true);
             leaveUi.SetActive(false);
@@ -304,7 +312,8 @@ namespace akaUdon
         {
             if ( interactDelay && owner == Networking.LocalPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
             {
-                Debug.Log("You have clicked the start button");
+                //Debug.Log("You have clicked the start button");
+                Log("You have clicked the start button");
                 if(yourTurn){_LocalClickSound(1f);}
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
@@ -318,7 +327,8 @@ namespace akaUdon
         {
             if (interactDelay && owner == null)
             {
-                Debug.Log("You have requested to join the game on station #" + stationNum);
+                //Debug.Log("You have requested to join the game on station #" + stationNum);
+                Log("You have requested to join the game on station #" + stationNum);
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
@@ -333,7 +343,8 @@ namespace akaUdon
         {
             if (interactDelay && owner == Networking.LocalPlayer)
             {
-                Debug.Log("You have requested to leave the game");
+                //Debug.Log("You have requested to leave the game");
+                Log("You have requested to leave the game");
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(0.9f);
@@ -499,13 +510,14 @@ namespace akaUdon
 
         public override void OnDeserialization()
         {
-            Debug.Log("Deseralization requested on station #"+stationNum);
+            Log("Deseralization requested on station #"+stationNum);
             AllDeserializtaion();
         }
 
         private void AllDeserializtaion()
         {
-            Debug.Log("Running a Task, task #"+task);
+            //Debug.Log("Running a Task, task #"+task);
+            Log("Running a Task, task #"+task);
             switch (task)
             {
                 case 0 : return;
@@ -541,5 +553,20 @@ namespace akaUdon
         }
 
         #endregion
+        
+        private void Log(string message)
+        {
+            if(!logging){return;}
+            
+            string m = "-" + System.DateTime.Now + "-"+ gameObject.name + "- " + message + "\n";
+            if (logger != null)
+            {
+                logger.text += m;
+            }
+            else
+            {
+                Debug.Log(m);
+            }
+        }
     }
 }
