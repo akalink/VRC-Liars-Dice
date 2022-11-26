@@ -3,8 +3,6 @@
 ### Dependencies
 - Udon 1.0 (download from the VRC Creator Companion)
 
-~~- [CyanPlayerObjectPool](https://github.com/CyanLaser/CyanPlayerObjectPool)~~
-
 ### Instal Instructions
 1. Download the most recent release (download link is to the right)
 2. Import the Unity Package into your World Unity Project

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
@@ -34,6 +35,8 @@ namespace akaUdon
         [UdonSynced()] private int[] currentPlayers = new int[4];
         [UdonSynced()] private int numJoinedPlayers = 0;
         [UdonSynced()] private int playingPlayer = -1;
+        private int postContestTurnPlayer = -1;
+        private bool postContestTurn = false;
         [UdonSynced()] private bool gameStarted = false;
         [UdonSynced()] private int currentMulti = 1;
         [UdonSynced()] private int currentDie = -1;
@@ -232,6 +235,7 @@ namespace akaUdon
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
                     currentPlayers[i] = -1;
+                    remaining[i] = 5;
                 }
 
                 numJoinedPlayers = 0;
@@ -294,7 +298,14 @@ namespace akaUdon
             {
                 Randomize();
                 SendCustomNetworkEvent(NetworkEventTarget.All, nameof(DiceRollSound));
-                NextTurn();
+                if (postContestTurn)
+                {
+                    NextTurn(postContestTurnPlayer);
+                }
+                else
+                {
+                    NextTurn();
+                }
             }
         }
 
@@ -310,21 +321,32 @@ namespace akaUdon
 
         private void NextTurn()
         {
+            NextTurn(playingPlayer);
+        }
+
+        private void NextTurn(int lastPlayer)
+        {
             if (Networking.IsMaster)
             {
-                int next = playingPlayer;
-                do
+                int next = lastPlayer;
+                if (!postContestTurn && remaining[next] > 0)
                 {
-                    next++;
-                    if (next >= currentPlayers.Length)
+                    do
                     {
-                        next = 0;
-                    }
-                } while (currentPlayers[next] == -1 || remaining[next] < 1);
-                //Debug.Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
-                Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
-                
-                if (numJoinedPlayers <= 1 || playingPlayer == next)
+                        next++;
+                        if (next >= currentPlayers.Length)
+                        {
+                            next = 0;
+                        }
+                    } while (currentPlayers[next] == -1 || remaining[next] < 1);
+
+                    Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " +
+                        numJoinedPlayers);
+                }
+
+                postContestTurn = false;
+
+                if (numJoinedPlayers <= 1 )//|| playingPlayer == next)
                 {
                     gameStarted = false;
                     lastWinner = currentPlayers[playingPlayer];
@@ -375,19 +397,10 @@ namespace akaUdon
             }
             
         }
-
-        /*public void _PlayerSubmitBid(int multi, int die)
-        {
-            _localPoolObject._SetMultiDie(multi, die);
-        }*/
+        
 
         public void _PlayerContests()
         {
-           //SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Contest));
-           /*
-        }
-        private void Contest()
-        {*/
             int lastPlayer = playingPlayer;
 
             do
@@ -434,6 +447,7 @@ namespace akaUdon
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[lastPlayer]);
             
             String lossPlayer;
+            postContestTurn = true;
             if (currentMulti > sum)
             {
                 //ha ha perish
@@ -447,6 +461,7 @@ namespace akaUdon
                     lossPlayer = "\n" + player.displayName + " losses a dice";
                 }
 
+                postContestTurnPlayer = lastPlayer;
                 LiarFoundSound();
                 if (Networking.IsMaster)
                 {
@@ -455,6 +470,8 @@ namespace akaUdon
                     {
                         numJoinedPlayers--;
                     }
+
+                    playingPlayer = lastPlayer;
                 }
             }
             else
@@ -470,7 +487,8 @@ namespace akaUdon
                 {
                     lossPlayer = "\n" + player.displayName + " losses a dice";
                 }
-                
+
+                postContestTurnPlayer = playingPlayer;
                 TruthFoundSound();
                 if (Networking.IsMaster)
                 {
@@ -672,8 +690,14 @@ namespace akaUdon
 
         private void AllDeserialization()
         {
-            //Debug.Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
-            Log("NumPlayers=" + numJoinedPlayers.ToString() + " Joined amount is " + numJoinedPlayers+" Playing Player is " + playingPlayer + ", Multi is " +currentMulti + " and die is " + currentDie);
+            int totalRemaining = 0;
+            foreach (int i in remaining)
+            {
+                totalRemaining += i;
+            }
+
+            totalRemaining = totalRemaining - (remaining.Length - numJoinedPlayers)*5;
+            Log("Joined amount is " + numJoinedPlayers+", Playing Player is " + playingPlayer + ", Multi is " +currentMulti + ", the die is " + currentDie +", and the remaining dice is " + totalRemaining);
             
             
             onesWildStateVisual.SetActive(onesWild);

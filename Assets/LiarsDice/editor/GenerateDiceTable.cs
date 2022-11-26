@@ -31,6 +31,7 @@ namespace akaUdon
             var v =PrefabUtility.InstantiatePrefab(loggerPrefab as GameObject);
             GameObject g = (GameObject) v;
             TextMeshProUGUI tmp = g.GetComponentInChildren<TextMeshProUGUI>();
+            Debug.Log("tmp " + tmp.gameObject.name);
 
             if (UdonBehaviour.FindObjectOfType<akaUdon.LiarsDiceMaster>())
             {
