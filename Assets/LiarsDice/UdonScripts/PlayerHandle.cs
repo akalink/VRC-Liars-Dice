@@ -96,13 +96,13 @@ namespace akaUdon
         }
         public void _SetPlayerNameUI()
         {
-            //Debug.Log("Station " + stationNum + " is given a user");
-            Log("Station " + stationNum + " is given a user");
             if (owner != null)
             {
                 playerNameDisplay.text = owner.displayName;
-                //Debug.Log("Player is assigned");
-                Log(owner.displayName +" is assigned station #"+ stationNum);
+            }
+            else
+            {
+                Log(stationNum + " should be assignable, but its owner variable is null");
             }
         }
         public void _ClearPlayerNameUI()
@@ -120,11 +120,11 @@ namespace akaUdon
         public void _SetOwner(int id)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(id);
-            //Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
+            if(owner == player){return;}
             Log("passed in player named "+ player.displayName+ " to station #" +stationNum);
             if (owner == null)
             {
-                //Debug.Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
+                
                 Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
                 owner = player;
                 joinUi.SetActive(false);
@@ -132,7 +132,6 @@ namespace akaUdon
             }
             else if (owner != player)
             {
-                //Debug.Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
                 Log("passed in player named "+ player.displayName+ " to station #" +stationNum + " ,but the station is already assigned");
                 joinUi.SetActive(true);
                 leaveUi.SetActive(false);
@@ -325,9 +324,8 @@ namespace akaUdon
         }
         public void _Join()
         {
-            if (interactDelay && owner == null)
+            if (interactDelay && owner == null && !diceMaster._GetGameStarted())
             {
-                //Debug.Log("You have requested to join the game on station #" + stationNum);
                 Log("You have requested to join the game on station #" + stationNum);
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
                 interactDelay = false;
@@ -510,44 +508,50 @@ namespace akaUdon
 
         public override void OnDeserialization()
         {
-            Log("Deseralization requested on station #"+stationNum);
             AllDeserializtaion();
         }
 
         private void AllDeserializtaion()
         {
             //Debug.Log("Running a Task, task #"+task);
-            Log("Running a Task, task #"+task);
+            string m = "Running a Task, task #" + task + " ";
+            
             switch (task)
             {
                 case 0 : return;
                 
                 case 1 : //claim station for yourself
+                    m += "claims station";
                     joinUi.SetActive(false);
                     leaveUi.SetActive(true);
                     if(owner == null){diceMaster._AddPlayerToGame(Networking.GetOwner(gameObject), stationNum);} //TODO, do ui toggling in here, have it reverse decisions in master script
                     
                     break;
                 case 2: //leave station
+                    m += "leaves station";
                     joinUi.SetActive(true);
                     leaveUi.SetActive(false);
                     startUi.SetActive(false);
                     if(owner != null){diceMaster._RemovePlayerFromGame(owner);}
                     break;
                 case 3: //sends dice values to master
+                    m += "submit bid";
                     diceMaster._ReceiveBid(multiNum, dieNumber);
                     break;
                 case 4 : //contests bid
+                    m += "contest bid";
                     diceMaster._PlayerContests();
                     break;
                 case 5 : //starts the game
+                    m += "start game";
                     diceMaster._InitializeGame();
                     break;
                 case 6: //continues the game
+                    m += "continue game";
                     diceMaster._NewRound();
                     break;
             }
-
+            Log(m);
             //task = 0;
 
         }

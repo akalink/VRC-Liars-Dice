@@ -237,7 +237,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &61271765390033261
 Transform:
   m_ObjectHideFlags: 0
@@ -277,8 +277,8 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 61271765390033262}
-  allowVRHandCollision: 1
   logger: {fileID: 0}
+  logging: 0
 --- !u!114 &61271765390033262
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -874,6 +874,8 @@ MonoBehaviour:
   onesWildStateVisual: {fileID: 3090128318988904324}
   displayText: {fileID: 3090128318661239830}
   FTStateVisual: {fileID: 3090128317133804961}
+  positionTracker: {fileID: 4397988373108249141}
+  proximityEnable: {fileID: 3090128318316934075}
   TruthContestSfx: {fileID: 8300000, guid: ee758e8713a0f514f8af3c14a9606e34, type: 3}
   LiarContestSfx: {fileID: 8300000, guid: 2294035342422f9469e7e7cf51ea4b5b, type: 3}
   DiceRollSmallSfx: {fileID: 8300000, guid: 2d6896a2a8f34a348a98dd6b8268b4e0, type: 3}
@@ -881,6 +883,8 @@ MonoBehaviour:
   gameEndSfx: {fileID: 8300000, guid: 50c620396a05da34384222bee791de4d, type: 3}
   speaker: {fileID: 3090128317095136514}
   audioStateVisual: {fileID: 3090128318324587240}
+  logger: {fileID: 0}
+  logging: 0
 --- !u!114 &3090128317218488926
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1628,6 +1632,8 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3090128318316934072}
   objectToToggle: {fileID: 61271765390033263}
+  logger: {fileID: 0}
+  logging: 0
 --- !u!114 &3090128318316934072
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -16,6 +16,8 @@ namespace akaUdon
         private Image[] buttonImages;
         private bool currentState = false;
         private Collider collider;
+        [HideInInspector] public TextMeshProUGUI logger;
+        [HideInInspector] public bool logging = false;
         
 
         void Start()
@@ -23,13 +25,14 @@ namespace akaUdon
             parent = this.transform.parent.gameObject;
             collider = GetComponent<Collider>();
             collider.enabled = false;
-            Debug.Log("Got the name of parent " + parent.name);
+            Log("Got the name of parent " + parent.name);
             textFields = parent.GetComponentsInChildren<TextMeshProUGUI>(true);
             buttonImages = parent.GetComponentsInChildren<Image>(true);
             SetSetter(currentState);
-            Debug.Log("Buttons amount is " +buttonImages.Length + " and text is " + textFields.Length);
+            Log("Buttons amount is " +buttonImages.Length + " and text is " + textFields.Length);
             collider.enabled = true;
         }
+        
 
         public override void OnPlayerTriggerEnter(VRCPlayerApi player)
         {
@@ -51,6 +54,7 @@ namespace akaUdon
 
         private void SetSetter(bool state)
         {
+            Log("All text and button visablity should be " + state);
             objectToToggle.SetActive(state);
             int maxSize = textFields.Length > buttonImages.Length ? textFields.Length : buttonImages.Length;
             
@@ -65,6 +69,21 @@ namespace akaUdon
                 {
                     buttonImages[i].enabled = state;
                 }
+            }
+        }
+        
+        private void Log(string message)
+        {
+            if(!logging){return;}
+            
+            string m = "-" + System.DateTime.Now + "-"+ gameObject.name + "- " + message + "\n";
+            if (logger != null)
+            {
+                logger.text += m;
+            }
+            else
+            {
+                Debug.Log(m);
             }
         }
     }

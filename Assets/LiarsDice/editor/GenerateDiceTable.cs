@@ -21,7 +21,7 @@ namespace akaUdon
             
         }
         
-        [MenuItem("Window/Liar's Dice Table/Generate Only Logger")]
+        /*[MenuItem("Window/Liar's Dice Table/Generate Only Logger")]
         public static void GenerateOnlyLogger()
         {
             Debug.Log("The Generate Only Logger Button was chosen");
@@ -39,7 +39,7 @@ namespace akaUdon
                 ldm.logger = tmp;
                 ldm.logging = true;
             }
-        }
+        }*/
         
         [MenuItem("Window/Liar's Dice Table/Generate Table with Logger")]
         public static void GenerateDiceTableWithLogger()

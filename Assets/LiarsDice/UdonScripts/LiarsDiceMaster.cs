@@ -25,6 +25,8 @@ namespace akaUdon
             */
         #region Instance Variables
         
+        //todo people should be able to leave the game and game continues
+        //todo hand trackers not working.
         //todo fix late joiner message
         
         //todo make it so table raised part is part of the playerHandle prefab
@@ -54,15 +56,20 @@ namespace akaUdon
         private bool toggleFTState;
         [SerializeField] private GameObject FTStateVisual;
         private int rulesIndex = 0;
+        [SerializeField] private PositionTracker positionTracker;
+        [SerializeField] private ProximityEnable proximityEnable;
 
-        private string[] rules = new string[6]
+        private readonly string[] rules = new string[9]
         {
-            "On the first turn of a round, the first player will declare how many of a certain dice is present among all players",
-            "Each player must raise the bid in some fashion, either the multiplier or the face/pip value",
-            "If you think the bid is too ridiculous, you can \"Call it\", this will compare the bid to the actual values among us",
-            "If the bid is greater than the actual, the bidder losses a dice, but if the bid is equal to or less than the actual, you lose a dice",
-            "If you loose all your dice, you are eliminated",
-            "The winner is the last player who still has dice"
+            "To begin each round, all players roll their dice simultaneously.",
+            "Each player looks at their own dice after they roll, keeping them hidden from the other players.",
+            "The first player then states a bid consisting of a face (\"1's\", \"5's\", etc.) and a quantity.",
+            "The quantity represents the player's guess as to how many of each face have been rolled by all the players at the table, including themselves. For example, a player might bid \"five 2's.\"",
+            "Each subsequent player can either then make a higher bid of the same face (e.g., \"six 2's\"), or they can challenge the previous bid",
+            "If the player challenges the previous bid, all players reveal their dice. If the bid is matched or exceeded, the bidder wins. Otherwise the challenger wins.",
+            "If the bidder loses, they remove one of their dice from the game.",
+            "The loser of the previous round begins the next round.",
+            "The winner of the game is the last player to have any dice remaining."
         };
     
 
@@ -86,6 +93,10 @@ namespace akaUdon
         #region initialization
         void Start()
         {
+            positionTracker.logger = logger;
+            positionTracker.logging = logging;
+            proximityEnable.logger = logger;
+            proximityEnable.logging = logging;
             Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
 
             
@@ -248,9 +259,15 @@ namespace akaUdon
                 AllDeserialization();
             }
         }
+        
         #endregion
 
         #region game logic
+
+        public bool _GetGameStarted()
+        {
+            return gameStarted;
+        }
         
        /*public void _StartGame()
         {
@@ -326,6 +343,8 @@ namespace akaUdon
 
         private void NextTurn(int lastPlayer)
         {
+            
+            Log("passed in previous player is index " + lastPlayer);
             if (Networking.IsMaster)
             {
                 int next = lastPlayer;
@@ -469,6 +488,7 @@ namespace akaUdon
                     if (remaining[lastPlayer] == 0)
                     {
                         numJoinedPlayers--;
+                        postContestTurnPlayer = playingPlayer;
                     }
 
                     playingPlayer = lastPlayer;
@@ -496,6 +516,7 @@ namespace akaUdon
                     if (remaining[playingPlayer] == 0)
                     {
                         numJoinedPlayers--;
+                        postContestTurnPlayer = lastPlayer;
                     }
                 }
             }
@@ -508,8 +529,12 @@ namespace akaUdon
                 currentDie = -1;
                 currentMulti = 1;
                 playingPlayer = lastPlayer;
+                if (remaining[postContestTurnPlayer] <= 0)
+                { 
+                    player = VRCPlayerApi.GetPlayerById(currentPlayers[postContestTurnPlayer]);
+                    Log(player.displayName + " (station index "+postContestTurnPlayer+") should play next");
+                }
             }
-
         }
 
         private void Randomize() 
@@ -601,7 +626,7 @@ namespace akaUdon
         {
             //Debug.Log("A user has requested to join the game");
             Log("The player " + player.displayName + " has requested to join the game");
-            if (Networking.IsMaster && Utilities.IsValid(player))
+            if (Networking.IsMaster && Utilities.IsValid(player) && !gameStarted)
             {
                 
                 foreach (int id in currentPlayers) // check if already assigned

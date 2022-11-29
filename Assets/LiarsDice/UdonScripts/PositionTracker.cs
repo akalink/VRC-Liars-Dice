@@ -9,29 +9,38 @@ namespace akaUdon
     public class PositionTracker : UdonSharpBehaviour
     {
         [Header("A system that will follow the players position and optionally their head and hands allow them to press buttons with their hands while in vr")]
-        public bool allowVRHandCollision = true;
+        private bool allowVRHandCollision = true;
         private bool fingerCollision = false;
-        public TextMeshProUGUI logger;
+        [HideInInspector] public TextMeshProUGUI logger;
+        [HideInInspector] public bool logging = true;
         private HumanBodyBones LeftBone;
         private HumanBodyBones RightBone;
-        private bool insideArea = false;
+
         private VRCPlayerApi LocalPlayer;
         private bool isNull = false;
         private Transform[] trackedPoints;
 
         private Collider collision;
         
-        private void LoggerPrint(string text)
+        private void Log(string message)
         {
+            if(!logging){return;}
+            
+            string m = "-" + System.DateTime.Now + "-"+ gameObject.name + "- " + message + "\n";
             if (logger != null)
             {
-                logger.text += "-" + this.name + "-" + text + "\n";
+                logger.text += m;
+            }
+            else
+            {
+                Debug.Log(m);
             }
         }
 
         #region InitializeAllTheThings
         void Start()
         {
+            Log("Beging Initialization");
             collision = GetComponent<Collider>();
             
             if (Networking.LocalPlayer == null)
@@ -54,13 +63,13 @@ namespace akaUdon
                 {
                     fingerCollision = _Checkbones();
                 }
-                LoggerPrint("VR and bone check returned " + allowVRHandCollision);
+                Log("VR and bone check returned " + allowVRHandCollision);
             }
             else
             {
                 trackedPoints[1].gameObject.SetActive(false);
                 trackedPoints[2].gameObject.SetActive(false);
-                LoggerPrint("Hand Colliders are disabled");
+                Log("Hand Colliders are disabled");
             }
         }
         
@@ -93,7 +102,7 @@ namespace akaUdon
             return returnIfAssigned;
         }
 
-        public override void OnPlayerTriggerEnter(VRCPlayerApi player)
+        /*public override void OnPlayerTriggerEnter(VRCPlayerApi player)
         {
             if (player == Networking.LocalPlayer)// && Networking.LocalPlayer.IsUserInVR())
             {
@@ -113,29 +122,25 @@ namespace akaUdon
                 trackedPoints[2].gameObject.SetActive(false);
                 //collision.enabled = false;
             }
-        }
+        }*/
 
         #endregion
         
 
         private void Update()
         {
-            if (!isNull && insideArea)
+            if (!isNull && allowVRHandCollision)
             {
-                if (allowVRHandCollision)
+                if (fingerCollision)
                 {
-                    if (fingerCollision)
-                    {
-                        trackedPoints[1].position = LocalPlayer.GetBonePosition(RightBone);
-                        trackedPoints[2].position = LocalPlayer.GetBonePosition(LeftBone);
-                    }
-                    else
-                    {
-                        trackedPoints[1].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
-                        trackedPoints[2].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
-                    }
-                    
+                    trackedPoints[1].position = LocalPlayer.GetBonePosition(RightBone);
+                    trackedPoints[2].position = LocalPlayer.GetBonePosition(LeftBone);
                 }
+                else
+                { 
+                    trackedPoints[1].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
+                    trackedPoints[2].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
+                } 
             }
         }
     }
