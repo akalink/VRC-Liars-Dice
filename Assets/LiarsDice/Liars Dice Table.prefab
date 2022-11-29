@@ -2646,9 +2646,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7071182760956848314, guid: 56a895339ff286347a0ee5f56dd3536e,
         type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7071182760956848314, guid: 56a895339ff286347a0ee5f56dd3536e,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 2900bb8bc4f29bd4585115ee14a3c574, type: 2}
+    - target: {fileID: 7202271454713460447, guid: 56a895339ff286347a0ee5f56dd3536e,
+        type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7202271454713460447, guid: 56a895339ff286347a0ee5f56dd3536e,
         type: 3}
       propertyPath: m_Materials.Array.data[0]
