@@ -63,7 +63,7 @@ namespace akaUdon
         {
             if (allowVRHandCollision)
             {
-                allowVRHandCollision = true;//LocalPlayer.IsUserInVR();
+                allowVRHandCollision = LocalPlayer.IsUserInVR();
                 if (allowVRHandCollision)
                 {
                     fingerCollision = _Checkbones();
@@ -106,28 +106,6 @@ namespace akaUdon
 
             return returnIfAssigned;
         }
-
-        /*public override void OnPlayerTriggerEnter(VRCPlayerApi player)
-        {
-            if (player == Networking.LocalPlayer)// && Networking.LocalPlayer.IsUserInVR())
-            {
-                insideArea = true;
-                trackedPoints[1].gameObject.SetActive(true);
-                trackedPoints[2].gameObject.SetActive(true);
-                //collision.enabled = true;
-            }
-        }
-
-        public override void OnPlayerTriggerExit(VRCPlayerApi player)
-        {
-            if (player == Networking.LocalPlayer)// && Networking.LocalPlayer.IsUserInVR())
-            {
-                insideArea = false;
-                trackedPoints[1].gameObject.SetActive(false);
-                trackedPoints[2].gameObject.SetActive(false);
-                //collision.enabled = false;
-            }
-        }*/
 
         #endregion
         

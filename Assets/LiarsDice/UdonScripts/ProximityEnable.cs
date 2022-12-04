@@ -11,11 +11,9 @@ namespace akaUdon
     public class ProximityEnable : UdonSharpBehaviour
     {
         [SerializeField] private GameObject objectToToggle;
-        private GameObject parent;
         private TextMeshProUGUI[] textFields;
         private Image[] buttonImages;
         private bool currentState = false;
-        private Collider collider;
         private PlayerHandle[] allStations;
         private bool[] colliderState;
         [HideInInspector] public TextMeshProUGUI logger;
@@ -24,14 +22,10 @@ namespace akaUdon
 
         void Start()
         {
-            parent = this.transform.parent.gameObject;
-            collider = GetComponent<Collider>();
+            GameObject parent = this.transform.parent.gameObject;
+            Collider collider = GetComponent<Collider>();
             collider.enabled = false;
             allStations = parent.GetComponentsInChildren<PlayerHandle>(true);
-            // foreach (Collider col in allColliders)
-            // {
-            //     Debug.Log(col.gameObject.name + " name");
-            // }
             Log("Got the name of parent " + parent.name);
             textFields = parent.GetComponentsInChildren<TextMeshProUGUI>(true);
             buttonImages = parent.GetComponentsInChildren<Image>(true);

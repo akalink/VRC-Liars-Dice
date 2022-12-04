@@ -11,6 +11,7 @@ VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is
 
    ![Example of the prefab](/image%20files/prefab%20example.png)
    ![Example of the Window Option](/image%20files/editor%20script%20example.png)
+4. The logger exists to help debug the table during development. It is suggested you use it if you plan to edit the table for any purpose.
 
 ### How to play
 To begin each round, all players roll their dice simultaneously. Each player looks at their own dice after they roll, keeping them hidden from the other players.
@@ -34,3 +35,9 @@ The winner of the game is the last player to have any dice remaining.
 - [🧝‍](https://github.com/orels1) orels1: TMP Billboard Shader
 - [🧙](https://github.com/MerlinVR/UdonSharp) Merlin: UdonSharp
 - [😼](https://github.com/Centauri2442) Centauri: General Help/Feedback/Testing
+
+
+### Future plans
+- Codesmell - reduce cognitive complexity of various methods
+- Implement reset button in UI for playing players
+- Implement easy language switching system

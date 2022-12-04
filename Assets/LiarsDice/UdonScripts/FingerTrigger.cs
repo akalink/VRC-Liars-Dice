@@ -14,7 +14,7 @@ namespace akaUdon
     {
         [SerializeField] private UdonBehaviour behavior;
         [SerializeField] private string methodName = "";
-        [SerializeField] private string pushInMethod = "_DepressedClickSound";
+        [SerializeField] private string pushInMethod = "_DepressedClickSoundAll";
         private readonly string handTrackerName = "trackhand12345";
         private bool inVR;
         private Collider collider;

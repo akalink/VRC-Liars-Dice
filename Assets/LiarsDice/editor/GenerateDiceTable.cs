@@ -20,27 +20,7 @@ namespace akaUdon
             PrefabUtility.InstantiatePrefab(tablePrefab as GameObject);
             
         }
-        
-        /*[MenuItem("Window/Liar's Dice Table/Generate Only Logger")]
-        public static void GenerateOnlyLogger()
-        {
-            Debug.Log("The Generate Only Logger Button was chosen");
-            object loggerPrefab =
-                AssetDatabase.LoadAssetAtPath("Assets/LiarsDice/Logger.prefab", typeof(GameObject));
 
-            var v =PrefabUtility.InstantiatePrefab(loggerPrefab as GameObject);
-            GameObject g = (GameObject) v;
-            TextMeshProUGUI tmp = g.GetComponentInChildren<TextMeshProUGUI>();
-            Debug.Log("tmp " + tmp.gameObject.name);
-
-            if (UdonBehaviour.FindObjectOfType<akaUdon.LiarsDiceMaster>())
-            {
-                akaUdon.LiarsDiceMaster ldm = UdonBehaviour.FindObjectOfType<akaUdon.LiarsDiceMaster>();
-                ldm.logger = tmp;
-                ldm.logging = true;
-            }
-        }*/
-        
         [MenuItem("Window/Liar's Dice Table/Generate Table with Logger")]
         public static void GenerateDiceTableWithLogger()
         {

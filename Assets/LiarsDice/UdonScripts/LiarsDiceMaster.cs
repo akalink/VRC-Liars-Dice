@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 using Random = UnityEngine.Random;
@@ -25,11 +26,8 @@ namespace akaUdon
             */
         #region Instance Variables
         
-        //todo people should be able to leave the game and game continues
-        //todo hand trackers not working.
         //todo fix late joiner message
         
-        //todo make it so table raised part is part of the playerHandle prefab
         [UdonSynced()] private int[] dieValues = new int[20];
         [UdonSynced()] private int[] remaining = new int[4]; //stretch goal, make these modular, no magic numbers
         private Renderer[] diceMesh; 
@@ -43,7 +41,7 @@ namespace akaUdon
         [UdonSynced()] private int currentMulti = 1;
         [UdonSynced()] private int currentDie = -1;
         [UdonSynced()] private int lastWinner = -1;
-        [UdonSynced()] private bool onesWild = false;
+        [SerializeField][UdonSynced()] private bool onesWild = true;
         [SerializeField] private GameObject onesWildStateVisual;
         private bool onesInvalid = false;
         private bool canInteract = false;
@@ -53,8 +51,6 @@ namespace akaUdon
         public TextMeshProUGUI rulesText;
         private String oldMessage;
         private PlayerHandle[] playerHandles;
-        private bool toggleFTState;
-        [SerializeField] private GameObject FTStateVisual;
         private int rulesIndex = 0;
         [SerializeField] private PositionTracker positionTracker;
         [SerializeField] private ProximityEnable proximityEnable;
@@ -83,6 +79,7 @@ namespace akaUdon
         [SerializeField] private AudioSource speaker;
         private bool audioState = true;
         [SerializeField] private GameObject audioStateVisual;
+        [SerializeField] private Slider slider;
         
         public TextMeshProUGUI logger;
         public bool logging = false;
@@ -98,7 +95,6 @@ namespace akaUdon
             positionTracker.logging = logging;
             proximityEnable.logger = logger;
             proximityEnable.logging = logging;
-            Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
 
             _ShowRules();
             playerHandles = GetComponentsInChildren<PlayerHandle>(true);
@@ -151,49 +147,6 @@ namespace akaUdon
                 AllDeserialization();
             }
         }
-        
-        /*public void _ToggleInteractMethod()
-        {
-            if (Networking.LocalPlayer.IsUserInVR())
-            {
-                toggleFTState = !toggleFTState;
-                FTStateVisual.SetActive(toggleFTState);
-                for (int i = 0; i < fingerColliders.Length; i++)
-                {
-                    fingerColliders[i].enabled = toggleFTState;
-                    if (i < canvasColliders.Length)
-                    {
-                        canvasColliders[i].enabled = !toggleFTState;
-                    }
-                }
-            }
-        }*/
-
-        /*public void _ToggleCollidersOff()
-        {
-            for (int i = 0; i < fingerColliders.Length; i++)
-            {
-                fingerColliders[i].enabled = false;
-                if (i < canvasColliders.Length)
-                {
-                    canvasColliders[i].enabled = false;
-                }
-            }
-        }*/
-
-        /*public void _ToggleCollidersOn()
-        {
-            bool tempBool = Networking.LocalPlayer.IsUserInVR() ? toggleFTState : false;
-            for (int i = 0; i < fingerColliders.Length; i++)
-            {
-                fingerColliders[i].enabled = false;
-                if (i < canvasColliders.Length)
-                {
-                    canvasColliders[i].enabled = false;
-                }
-            }
-            
-        }*/
 
         public void _ToggleAudio()
         {
@@ -205,36 +158,31 @@ namespace akaUdon
             }
         }
 
-        public void _EndGame()
+        public void _SetVolume()
+        {
+            speaker.volume = slider.value;
+            foreach (PlayerHandle pH in playerHandles)
+            {
+                pH._SetVolume(slider.value);
+            }
+        }
+
+        public void _LeaveGame()
         {
             if (gameStarted && canInteract)
             {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(EndGameNetwork));
-            }
-        }
-
-        public void EndGameNetwork()
-        {
-            if (gameStarted && Networking.IsMaster)
-            {
-                gameStarted = false;
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
-                    currentPlayers[i] = -1;
-                    remaining[i] = 5;
+                    if (currentPlayers[i] == Networking.LocalPlayer.playerId)
+                    {
+                        Log(Networking.LocalPlayer.displayName + " requested to leave game");
+                        playerHandles[i]._RequestToLeaveGame();
+                        return;
+                    }
                 }
-
-                numJoinedPlayers = 0;
-                currentMulti = 1;
-                currentDie = -1;
-                    
-                SendCustomNetworkEvent(NetworkEventTarget.All,nameof(ResetStations));
-                playingPlayer = -1;
-                RequestSerialization();
-                AllDeserialization();
             }
         }
-        
+
         #endregion
 
         #region game logic
@@ -243,15 +191,6 @@ namespace akaUdon
         {
             return gameStarted;
         }
-        
-       /*public void _StartGame()
-        {
-            if(!canInteract){return;}
-            if (numJoinedPlayers > 1)
-            {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(_InitializeGame));
-            }
-        }*/
 
         public void _ContinueGame()
         {
@@ -273,7 +212,6 @@ namespace akaUdon
         {
             if (Networking.IsMaster)
             {
-                //Debug.Log("Starting new game with " + numJoinedPlayers + " number of players");
                 Log("Starting new game with " + numJoinedPlayers + " number of players");
                 gameStarted = true;
                 playingPlayer = currentPlayers.Length-1;
@@ -568,38 +506,9 @@ namespace akaUdon
         #endregion
         
         #region player Involement logic
-        
-        /*[PublicAPI] //cyan object pool dependency
-        public void _OnLocalPlayerAssigned()
-        {
-
-            // Get the local player's pool object so we can later perform operations on it.
-            _localPoolObject = (PooledObject) objectPool._GetPlayerPooledUdon(Networking.LocalPlayer);
-
-            // Allow the user to interact with this object.
-            DisableInteractive = false;
-        }
-        
-       / public void _Join(int playerNum)
-        {
-            if (!gameStarted)
-            {
-                _localPoolObject._SetValue(playerNum);
-                _localPoolObject._JoinGame();
-            }
-        }/
-
-        /*public void _Leave(int playerNum)
-        {
-            if (Utilities.IsValid(_localPoolObject)) // check if valid
-            {
-                _localPoolObject._RemoveGame();
-            }
-        }*/
 
         public void _AddPlayerToGame(VRCPlayerApi player, int playerNum)
         {
-            //Debug.Log("A user has requested to join the game");
             Log("The player " + player.displayName + " has requested to join the game");
             if (Networking.IsMaster && Utilities.IsValid(player) && !gameStarted)
             {
@@ -609,7 +518,6 @@ namespace akaUdon
                     
                     if (id == player.playerId) // return already if assigned
                     {
-                        //Debug.Log("The player is already in the game");
                         Log(player.displayName + " is already in the game");
                         RequestSerialization();
                         AllDeserialization();
@@ -617,7 +525,6 @@ namespace akaUdon
                     }
                 }
                 
-                //Debug.Log("Adding the player to the game");
                 Log("Adding " + player.displayName + " to the game");
                 numJoinedPlayers++;
                 currentPlayers[playerNum] = player.playerId;
@@ -629,17 +536,14 @@ namespace akaUdon
         
         public void _RemovePlayerFromGame(VRCPlayerApi player)
         {
-            //Debug.Log("A player has requested to be removed from the game");
             Log("The player " + player.displayName + " has requested to be removed from the game");
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
-                //Debug.Log("Removing player " + player.displayName);
                 Log("Removing player " + player.displayName);
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
                     if (currentPlayers[i] == player.playerId)
                     {
-                        //Debug.Log("The player " + player.displayName + " is being removed from the game");
                         Log("The player " + player.displayName + " is being removed from the game");
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
@@ -652,9 +556,9 @@ namespace akaUdon
             }
         }
 
-        public override void OnPlayerLeft(VRCPlayerApi player)
+        public void _PlayerLeft(VRCPlayerApi player)
         {
-            if (Networking.IsMaster)
+            if (Networking.IsMaster && Utilities.IsValid(player))
             {
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
@@ -678,6 +582,11 @@ namespace akaUdon
                     }
                 }
             }
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            _PlayerLeft(player);
         }
         #endregion
 
@@ -763,6 +672,7 @@ namespace akaUdon
                     playerHandles[i]._StartState(false);
                     playerHandles[i]._ClearPlayerNameUI();
                 }
+                if(gameStarted){playerHandles[i]._GameStarted();}
             }
             //end loop
         }
@@ -844,10 +754,6 @@ namespace akaUdon
                     {
                         if (Networking.LocalPlayer.playerId == currentPlayers[playerNum])
                         {
-                            /*if (dieValues[i] == currentDie || (onesWild && !onesInvalid && dieValues[i] == 0))
-                            {
-                                diceMesh[i].material.SetColor("_Color", Color.cyan);
-                            }*/
 
                             diceMesh[i].material.SetFloat(materialFloatName, dieValues[i]);
                             diceLeft++;

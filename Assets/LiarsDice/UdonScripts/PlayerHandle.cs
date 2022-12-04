@@ -21,7 +21,7 @@ namespace akaUdon
     {
         #region Instance Variables
 
-        [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice, 4: contests bid, 5: starts the game, 6: continues the game
+        [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice, 4: contests bid, 5: starts the game, 6: continues the game, 7: leave playing game
         private int stationNum;
         private bool yourTurn = false;
         private VRCPlayerApi owner;
@@ -76,10 +76,7 @@ namespace akaUdon
 
         #region Set Logic
         
-        public void _SetAudioState(bool state)
-        {
-            audioState = state;
-        }
+
         void Start()
         {
             speaker = GetComponentInChildren<AudioSource>();
@@ -93,7 +90,7 @@ namespace akaUdon
             
             Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
             Debug.Log("Temp colliders length = "+tempColliders.Length);
-            bool inVR = true;//Networking.LocalPlayer.IsUserInVR();
+            bool inVR = Networking.LocalPlayer.IsUserInVR();
             fingerColliders = new Collider[tempColliders.Length - 2];
             
             
@@ -104,23 +101,31 @@ namespace akaUdon
                 {
                     canvasCollider = c;
                     canvasCollider.enabled = !inVR;
-                    Log(canvasCollider.gameObject.name + " found canvas collider");
                 }
                 else if(c.gameObject.name.Contains(("selector")))
                 {
                     fingerColliders[tempIndexFinger] = c;
                     fingerColliders[tempIndexFinger].enabled = inVR;
-                    Log(fingerColliders[tempIndexFinger].gameObject.name + " found finger collider");
                     tempIndexFinger++;
                     
                 }
             }
+            Log("Iterated though all child colliders without issue");
+        }
+        public void _SetAudioState(bool state)
+        {
+            audioState = state;
+        }
+
+        public void _SetVolume(float f)
+        {
+            speaker.volume = f;
         }
 
         public void _SetCollisionState(bool state)
         {
             if(canvasCollider != null){canvasCollider.enabled = state;}
-            if (fingerColliders != null && true)//Networking.LocalPlayer.IsUserInVR())
+            if (fingerColliders != null && Networking.LocalPlayer.IsUserInVR())
             {
                 foreach (Collider c in fingerColliders)
                 {
@@ -134,9 +139,9 @@ namespace akaUdon
 
         private void SetOnlyCanvasCollision(bool state)
         {
-            Log("Canvas should be "+ state +", but selectors should be " + !state);
+            //Log("Canvas should be "+ state +", but selectors should be " + !state);//this log has been commented out because it can spam the logger making it harder to use.
             if(canvasCollider != null) {canvasCollider.enabled = state;}
-            if (fingerColliders != null && true)//Networking.LocalPlayer.IsUserInVR())
+            if (fingerColliders != null && Networking.LocalPlayer.IsUserInVR())
             {
                 foreach (Collider c in fingerColliders)
                 {
@@ -214,6 +219,13 @@ namespace akaUdon
             owner = null;
             joinUi.SetActive(true);
             leaveUi.SetActive(false);
+            preGameUi.SetActive(true);
+            inGameUi.SetActive(false);
+        }
+
+        public void _GameStarted()
+        {
+            joinUi.SetActive(false);
         }
         #endregion
 
@@ -290,25 +302,42 @@ namespace akaUdon
             }
         }
 
-        public void _DepressedClickSound()
+        public void _DepressedClickSoundAll()
         {
             _LocalClickSound(0.7f);
         }
 
-        public void _UserDrepressClickSound()
+        public void _DepressedClickSoundOwner()
+        {
+            if (owner == Networking.LocalPlayer)
+            {
+                _LocalClickSound(0.7f);
+            }
+        }
+
+        public void _DepressedClickSoundOwnerTurn()
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
                 _LocalClickSound(0.7f);
             }
         }
-
         private void _AltClickSound(float f) 
         {
-            // todo implement
+            if (audioState && altSelectionSfx != null)
+            {
+                speaker.pitch = f;
+                speaker.clip = altSelectionSfx;
+                speaker.Play();
+            }
         }
 
-        public void _DepressedAltClickSound()
+        public void _DepressedAltClickSoundAll()
+        {
+            _AltClickSound(0.7f);
+        }
+        
+        public void _DepressedAltClickSoundOwnerTurn()
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
@@ -385,7 +414,7 @@ namespace akaUdon
             if (multiNum + num >= min && (multiNum + num <= max))
             {
                 multiNum += num;
-                if(yourTurn){_LocalClickSound(multiNum/10 + 0.9f);}
+                if(yourTurn){_AltClickSound(((float)multiNum)/10 + 0.9f);}
                 UpdateMultiDisplay();
                 HighLightButton(dieNumber);
             } 
@@ -403,7 +432,6 @@ namespace akaUdon
         {
             if ( interactDelay && owner == Networking.LocalPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
             {
-                //Debug.Log("You have clicked the start button");
                 Log("You have clicked the start button");
                 if(yourTurn){_LocalClickSound(1f);}
                 interactDelay = false;
@@ -413,6 +441,13 @@ namespace akaUdon
                 RequestSerialization();
                 AllDeserializtaion();
             }
+        }
+
+        public void _RequestToLeaveGame()
+        {
+            task = 7;
+            RequestSerialization();
+            AllDeserializtaion();
         }
         public void _Join()
         {
@@ -433,7 +468,6 @@ namespace akaUdon
         {
             if (interactDelay && owner == Networking.LocalPlayer)
             {
-                //Debug.Log("You have requested to leave the game");
                 Log("You have requested to leave the game");
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
@@ -458,7 +492,7 @@ namespace akaUdon
                 
                 if (multiNum > min || dieNumber > prevDieNumber)
                 {
-                    { //disable button
+                    //disable button
                         ColorBlock block;
                         Color c;
                         c = Color.gray;
@@ -466,7 +500,7 @@ namespace akaUdon
                         block.normalColor = c;
                         block.selectedColor = c;
                         otherButtons[2].colors = block;
-                    } //end disable
+                    //end disable
                     interactDelay = false;
                     SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                     _LocalClickSound(1.1f);
@@ -538,7 +572,7 @@ namespace akaUdon
         public void _ChooseOne() {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1f);
                 dieNumber = 0;
                 HighLightButton(0);
             }
@@ -548,7 +582,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1.1f);
                 dieNumber = 1;
                 HighLightButton(1);
             }
@@ -558,7 +592,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1.2f);
                 dieNumber = 2;
                 HighLightButton(2);
             }
@@ -568,7 +602,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1.3f);
                 dieNumber = 3;
                 HighLightButton(3);
             }
@@ -578,7 +612,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1.4f);
                 dieNumber = 4;
                 HighLightButton(4);
             }
@@ -588,7 +622,7 @@ namespace akaUdon
         {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
-                _LocalClickSound(1f);
+                _AltClickSound(1.5f);
                 dieNumber = 5;
                 HighLightButton(5);
             }
@@ -606,7 +640,6 @@ namespace akaUdon
 
         private void AllDeserializtaion()
         {
-            //Debug.Log("Running a Task, task #"+task);
             string m = "Running a Task, task #" + task + " ";
             
             switch (task)
@@ -643,9 +676,12 @@ namespace akaUdon
                     m += "continue game";
                     diceMaster._NewRound();
                     break;
+                case 7: //leave playing game
+                    m += "Mid leave game";
+                    diceMaster._PlayerLeft(owner);
+                    break;
             }
             Log(m);
-            //task = 0;
 
         }
 
