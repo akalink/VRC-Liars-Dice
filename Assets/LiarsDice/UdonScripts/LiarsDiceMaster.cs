@@ -48,9 +48,9 @@ namespace akaUdon
         private bool onesInvalid = false;
         private bool canInteract = false;
         private int diceLeft;
-        private Collider[] canvasColliders;
-        private Collider[] fingerColliders;
+
         public TextMeshProUGUI displayText;
+        public TextMeshProUGUI rulesText;
         private String oldMessage;
         private PlayerHandle[] playerHandles;
         private bool toggleFTState;
@@ -59,8 +59,9 @@ namespace akaUdon
         [SerializeField] private PositionTracker positionTracker;
         [SerializeField] private ProximityEnable proximityEnable;
 
-        private readonly string[] rules = new string[9]
+        private readonly string[] rules = new string[10]
         {
+            "",
             "To begin each round, all players roll their dice simultaneously.",
             "Each player looks at their own dice after they roll, keeping them hidden from the other players.",
             "The first player then states a bid consisting of a face (\"1's\", \"5's\", etc.) and a quantity.",
@@ -99,32 +100,12 @@ namespace akaUdon
             proximityEnable.logging = logging;
             Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
 
-            
+            _ShowRules();
             playerHandles = GetComponentsInChildren<PlayerHandle>(true);
-            canvasColliders = new Collider[playerHandles.Length];
-            fingerColliders = new Collider[tempColliders.Length - playerHandles.Length];
+
             currentPlayers = new int[playerHandles.Length];
             remaining = new int[playerHandles.Length];
-            bool inVR = Networking.LocalPlayer.IsUserInVR();
-            toggleFTState = inVR;
-            int tempIndexCanvas = 0;
-            int tempIndexFinger = 0;
-            foreach (Collider c in tempColliders)
-            {
-                if (c.gameObject.name.Contains("Canvas"))
-                {
-                    canvasColliders[tempIndexCanvas] = c;
-                    canvasColliders[tempIndexCanvas].enabled = !inVR;
-                    tempIndexCanvas++;
-                }
-                else
-                {
-                    fingerColliders[tempIndexFinger] = c;
-                    fingerColliders[tempIndexFinger].enabled = inVR;
-                    tempIndexFinger++;
-                }
-            }
-
+            
             diceMesh = GetComponentsInChildren<Renderer>();
             dieValues = new int[diceMesh.Length];
             for (int i = 0; i < currentPlayers.Length; i++) //initializes array of player ids to known value
@@ -150,16 +131,10 @@ namespace akaUdon
 
         public void _ShowRules()
         {
-            if (rulesIndex >= rules.Length)
-            {
-                rulesIndex = 0;
-                displayText.text = oldMessage;
-            }
-            else
-            {
-                displayText.text = rules[rulesIndex];
-                rulesIndex++;
-            }
+            if (rulesIndex >= rules.Length) { rulesIndex = 0;}
+
+            rulesText.text = rules[rulesIndex];
+            rulesIndex++;
         }
         public void _OnesWild()
         {
@@ -177,7 +152,7 @@ namespace akaUdon
             }
         }
         
-        public void _ToggleInteractMethod()
+        /*public void _ToggleInteractMethod()
         {
             if (Networking.LocalPlayer.IsUserInVR())
             {
@@ -192,9 +167,9 @@ namespace akaUdon
                     }
                 }
             }
-        }
+        }*/
 
-        public void _ToggleCollidersOff()
+        /*public void _ToggleCollidersOff()
         {
             for (int i = 0; i < fingerColliders.Length; i++)
             {
@@ -204,9 +179,9 @@ namespace akaUdon
                     canvasColliders[i].enabled = false;
                 }
             }
-        }
+        }*/
 
-        public void _ToggleCollidersOn()
+        /*public void _ToggleCollidersOn()
         {
             bool tempBool = Networking.LocalPlayer.IsUserInVR() ? toggleFTState : false;
             for (int i = 0; i < fingerColliders.Length; i++)
@@ -218,7 +193,7 @@ namespace akaUdon
                 }
             }
             
-        }
+        }*/
 
         public void _ToggleAudio()
         {

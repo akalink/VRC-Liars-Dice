@@ -1,4 +1,5 @@
 ﻿
+using System;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
@@ -27,7 +28,6 @@ namespace akaUdon
         #region Instance Variables
 
         [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice;
-        //[UdonSynced()] private int[] synchValues = new int[] {0, 0}; //0: multiplyer, 1: face value
         
         
         private int stationNum;
@@ -41,6 +41,10 @@ namespace akaUdon
         [UdonSynced()]private int dieNumber = 6;
         private int prevDieNumber = 6;
         private bool interactDelay = true;
+        
+        private Collider canvasCollider;
+        private Collider[] fingerColliders;
+        private readonly string handTrackerName = "trackhand12345";
 
         #region UIElements
 
@@ -89,11 +93,85 @@ namespace akaUdon
             speaker = GetComponentInChildren<AudioSource>();
             
             diceMaster = GetComponentInParent<LiarsDiceMaster>();
+            if(diceMaster == null){return;}
             NumberCalc(0);
 
             logging = diceMaster.logging;
             if (diceMaster.logger != null) { logger = diceMaster.logger; }
+            
+            Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
+            Debug.Log("Temp colliders length = "+tempColliders.Length);
+            bool inVR = true;//Networking.LocalPlayer.IsUserInVR();
+            fingerColliders = new Collider[tempColliders.Length - 2];
+            
+            
+            int tempIndexFinger = 0;
+            foreach (Collider c in tempColliders)
+            {
+                if (c.gameObject.name.Contains("Canvas"))
+                {
+                    canvasCollider = c;
+                    canvasCollider.enabled = !inVR;
+                    Log(canvasCollider.gameObject.name + " found canvas collider");
+                }
+                else if(c.gameObject.name.Contains(("selector")))
+                {
+                    fingerColliders[tempIndexFinger] = c;
+                    fingerColliders[tempIndexFinger].enabled = inVR;
+                    Log(fingerColliders[tempIndexFinger].gameObject.name + " found finger collider");
+                    tempIndexFinger++;
+                    
+                }
+            }
         }
+
+        public void _SetCollisionState(bool state)
+        {
+            if(canvasCollider != null){canvasCollider.enabled = state;}
+            if (fingerColliders != null && true)//Networking.LocalPlayer.IsUserInVR())
+            {
+                foreach (Collider c in fingerColliders)
+                {
+                    if (c != null)
+                    {
+                        c.enabled = state;
+                    }
+                }
+            }
+        }
+
+        private void SetOnlyCanvasCollision(bool state)
+        {
+            Log("Canvas should be "+ state +", but selectors should be " + !state);
+            if(canvasCollider != null) {canvasCollider.enabled = state;}
+            if (fingerColliders != null && true)//Networking.LocalPlayer.IsUserInVR())
+            {
+                foreach (Collider c in fingerColliders)
+                {
+                    if (c != null)
+                    {
+                        c.enabled = !state;
+                    }
+                }
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other != null && other.gameObject.name.Contains(handTrackerName))
+            {
+                SetOnlyCanvasCollision(false);
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other != null && other.gameObject.name.Contains(handTrackerName))
+            {
+                SetOnlyCanvasCollision(true);
+            }
+        }
+
         public void _SetPlayerNameUI()
         {
             if (owner != null)
@@ -216,6 +294,14 @@ namespace akaUdon
                 speaker.pitch = f;
                 speaker.clip = localSelectionSfx;
                 speaker.Play();
+            }
+        }
+
+        public void _DepressedClickSound()
+        {
+            if (owner == Networking.LocalPlayer && yourTurn)
+            {
+                _LocalClickSound(0.7f);
             }
         }
 
@@ -355,6 +441,7 @@ namespace akaUdon
         public void _Rules()
         {
             diceMaster._ShowRules();
+            _LocalClickSound(.8f);
         }
 
         public void _Submit()
@@ -524,7 +611,7 @@ namespace akaUdon
                     m += "claims station";
                     joinUi.SetActive(false);
                     leaveUi.SetActive(true);
-                    if(owner == null){diceMaster._AddPlayerToGame(Networking.GetOwner(gameObject), stationNum);} //TODO, do ui toggling in here, have it reverse decisions in master script
+                    if(owner == null){diceMaster._AddPlayerToGame(Networking.GetOwner(gameObject), stationNum);}
                     
                     break;
                 case 2: //leave station

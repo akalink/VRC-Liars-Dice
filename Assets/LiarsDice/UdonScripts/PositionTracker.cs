@@ -1,4 +1,5 @@
 ﻿
+using System;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
@@ -21,6 +22,10 @@ namespace akaUdon
         private Transform[] trackedPoints;
 
         private Collider collision;
+        private int count = 0;
+        Transform one;
+        Transform two;
+        private float d = 0;
         
         private void Log(string message)
         {
@@ -58,7 +63,7 @@ namespace akaUdon
         {
             if (allowVRHandCollision)
             {
-                allowVRHandCollision = LocalPlayer.IsUserInVR();
+                allowVRHandCollision = true;//LocalPlayer.IsUserInVR();
                 if (allowVRHandCollision)
                 {
                     fingerCollision = _Checkbones();
@@ -140,7 +145,23 @@ namespace akaUdon
                 { 
                     trackedPoints[1].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
                     trackedPoints[2].position = LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
-                } 
+                }
+
+                count++;
+
+                if (count % 240 == 0)
+                {
+                    
+                       float f = Vector3.Distance(LocalPlayer.GetBonePosition(HumanBodyBones.Chest), LocalPlayer.GetBonePosition(HumanBodyBones.Spine));
+                       if (Math.Abs(d - f) > .01)
+                       {
+                           Log("Avatar change detected");
+                           CheckVR();
+                       }
+
+                       d = f;
+                }
+
             }
         }
     }

@@ -16,6 +16,8 @@ namespace akaUdon
         private Image[] buttonImages;
         private bool currentState = false;
         private Collider collider;
+        private PlayerHandle[] allStations;
+        private bool[] colliderState;
         [HideInInspector] public TextMeshProUGUI logger;
         [HideInInspector] public bool logging = false;
         
@@ -25,6 +27,11 @@ namespace akaUdon
             parent = this.transform.parent.gameObject;
             collider = GetComponent<Collider>();
             collider.enabled = false;
+            allStations = parent.GetComponentsInChildren<PlayerHandle>(true);
+            // foreach (Collider col in allColliders)
+            // {
+            //     Debug.Log(col.gameObject.name + " name");
+            // }
             Log("Got the name of parent " + parent.name);
             textFields = parent.GetComponentsInChildren<TextMeshProUGUI>(true);
             buttonImages = parent.GetComponentsInChildren<Image>(true);
@@ -68,6 +75,11 @@ namespace akaUdon
                 if (i < buttonImages.Length)
                 {
                     buttonImages[i].enabled = state;
+                }
+
+                if (i < allStations.Length)
+                {
+                    allStations[i]._SetCollisionState(state);
                 }
             }
         }
