@@ -1,12 +1,15 @@
 # VRC-Liars-Dice
+VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is also known as Doubting Dice, Perudo, Mexacali, Call My Bluff, Pirates Dice, and Deception Dice. The rules are outlined below. 
+## Dependencies
+- UdonSharp 1.0 (download from the VRC Creator Companion)
 
-### Dependencies
-- Udon 1.0 (download from the VRC Creator Companion)
 
-### Instal Instructions
+## Instal Instructions
 1. Download the most recent release (download link is to the right)
 2. Import the Unity Package into your World Unity Project
 3. Import the Liars Dice Prefab into your scene **OR** generate using Window -> Liar's Dice Table -> Generate Only Table
+   ![Example of the prefab](/image%20files/prefab%20example.png)
+   ![Example of the Window Option](/image%20files/editor%20script%20example.png)
 
 ### How to play
 To begin each round, all players roll their dice simultaneously. Each player looks at their own dice after they roll, keeping them hidden from the other players.

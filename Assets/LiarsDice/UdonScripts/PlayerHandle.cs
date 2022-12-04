@@ -12,24 +12,16 @@ namespace akaUdon
      * Summary
      * This script handles all the logic for the individual "station" that player interacts from
      * In simplest terms, this script handles the UI for the player
-     * It runs without any networking, networking is handles by the Liar's dice Master Script.
-     * It contains some persistant data, this data is what element it is in the array of itself within the dice master script
-     * It will also store which user is assigned to it during a game. This is cleared at game end.
-     * It is stateless between each turn, the script will store any information for its next turn. 
-     */
-    /*
-
+     * A user will request to access the game by claiming ownership, if the station is available the master assigns that user to the station via set owner and as a variable.
+     * A variable is used because an udon object always has an owner but a variable can be null.
+     * This object will sync its selections, it will use Deseralization with a switch statement to send events for the master to sync on the dice master.
      */
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-
-
     public class PlayerHandle : UdonSharpBehaviour
     {
         #region Instance Variables
 
-        [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice;
-        
-        
+        [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice, 4: contests bid, 5: starts the game, 6: continues the game
         private int stationNum;
         private bool yourTurn = false;
         private VRCPlayerApi owner;
@@ -205,6 +197,7 @@ namespace akaUdon
                 
                 Log("Assigned player named "+ player.displayName+ " to station #" +stationNum);
                 owner = player;
+                Networking.SetOwner(player, gameObject);
                 joinUi.SetActive(false);
                 leaveUi.SetActive(true);
             }
@@ -299,6 +292,11 @@ namespace akaUdon
 
         public void _DepressedClickSound()
         {
+            _LocalClickSound(0.7f);
+        }
+
+        public void _UserDrepressClickSound()
+        {
             if (owner == Networking.LocalPlayer && yourTurn)
             {
                 _LocalClickSound(0.7f);
@@ -308,6 +306,14 @@ namespace akaUdon
         private void _AltClickSound(float f) 
         {
             // todo implement
+        }
+
+        public void _DepressedAltClickSound()
+        {
+            if (owner == Networking.LocalPlayer && yourTurn)
+            {
+                _AltClickSound(0.7f);
+            }
         }
         
 
