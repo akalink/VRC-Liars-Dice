@@ -8,6 +8,7 @@ VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is
 1. Download the most recent release (download link is to the right)
 2. Import the Unity Package into your World Unity Project
 3. Import the Liars Dice Prefab into your scene **OR** generate using Window -> Liar's Dice Table -> Generate Only Table
+
    ![Example of the prefab](/image%20files/prefab%20example.png)
    ![Example of the Window Option](/image%20files/editor%20script%20example.png)
 
