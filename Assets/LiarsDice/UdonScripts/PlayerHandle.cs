@@ -678,7 +678,7 @@ namespace akaUdon
                     break;
                 case 7: //leave playing game
                     m += "Mid leave game";
-                    diceMaster._PlayerLeft(owner);
+                    diceMaster._PlayerLeft(owner, true);
                     break;
             }
             Log(m);

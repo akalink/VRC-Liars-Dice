@@ -26,7 +26,7 @@ namespace akaUdon
             */
         #region Instance Variables
         
-        //todo fix late joiner message
+        //todo fix issue where defeated players can still play
         
         [UdonSynced()] private int[] dieValues = new int[20];
         [UdonSynced()] private int[] remaining = new int[4]; //stretch goal, make these modular, no magic numbers
@@ -192,11 +192,11 @@ namespace akaUdon
             return gameStarted;
         }
 
-        public void _ContinueGame()
+        /*public void _ContinueGame()
         {
             if(!canInteract){return;}
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(_NewRound));
-        }
+        }*/
 
         public bool _GetCanInteract()
         {
@@ -387,6 +387,10 @@ namespace akaUdon
                 if (remaining[lastPlayer] - 1 == 0)
                 {
                     lossPlayer = "\n" + player.displayName + " has been eliminated";
+                    if (player == Networking.LocalPlayer)
+                    {
+                        canInteract = false;
+                    }
                 }
                 else
                 {
@@ -400,8 +404,9 @@ namespace akaUdon
                     remaining[lastPlayer]--;
                     if (remaining[lastPlayer] == 0)
                     {
-                        numJoinedPlayers--;
+                        // numJoinedPlayers--;
                         postContestTurnPlayer = playingPlayer;
+                        _PlayerLeft(player, false);
                     }
 
                     playingPlayer = lastPlayer;
@@ -415,6 +420,10 @@ namespace akaUdon
                 if (remaining[playingPlayer] - 1 == 0)
                 {
                     lossPlayer = "\n" + player.displayName + " has been eliminated";
+                    if (player == Networking.LocalPlayer)
+                    {
+                        canInteract = false;
+                    }
                 }
                 else
                 {
@@ -428,7 +437,8 @@ namespace akaUdon
                     remaining[playingPlayer]--;
                     if (remaining[playingPlayer] == 0)
                     {
-                        numJoinedPlayers--;
+                        //numJoinedPlayers--;
+                        _PlayerLeft(player, false);
                         postContestTurnPlayer = lastPlayer;
                     }
                 }
@@ -556,7 +566,7 @@ namespace akaUdon
             }
         }
 
-        public void _PlayerLeft(VRCPlayerApi player)
+        public void _PlayerLeft(VRCPlayerApi player, bool serialize)
         {
             if (Networking.IsMaster && Utilities.IsValid(player))
             {
@@ -576,8 +586,13 @@ namespace akaUdon
                             numJoinedPlayers = 0;
                             NextTurn();
                         }
-                        RequestSerialization();
-                        AllDeserialization();
+
+                        if (serialize)
+                        {
+                            RequestSerialization();
+                            AllDeserialization();
+                        }
+
                         break;
                     }
                 }
@@ -586,7 +601,7 @@ namespace akaUdon
 
         public override void OnPlayerLeft(VRCPlayerApi player)
         {
-            _PlayerLeft(player);
+            _PlayerLeft(player, true);
         }
         #endregion
 
@@ -635,6 +650,7 @@ namespace akaUdon
         private void UpdateUIState()
         {
             ///looped section
+            bool included = false;
             for (int i = 0; i < currentPlayers.Length; i++)
             {
                 playerHandles[i]._ContinueState(false);
@@ -651,7 +667,7 @@ namespace akaUdon
 
                     if (currentPlayers[i] == Networking.LocalPlayer.playerId)
                     {
-                        canInteract = true;
+                        included = true;
                     }
                     if(!gameStarted){continue;}
                     
@@ -675,6 +691,7 @@ namespace akaUdon
                 if(gameStarted){playerHandles[i]._GameStarted();}
             }
             //end loop
+            canInteract = included;
         }
 
         private void UpdateText(string listPlayers)
