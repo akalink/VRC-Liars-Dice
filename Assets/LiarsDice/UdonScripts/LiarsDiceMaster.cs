@@ -343,9 +343,9 @@ namespace akaUdon
                     lastPlayer = currentPlayers.Length - 1;
                 }
             } while (currentPlayers[lastPlayer] == -1);
+            
 
             int sum = 0;
-
             for (int i = 0; i < dieValues.Length; i++)
             {
                 int playerNum = i / 5;
@@ -368,8 +368,6 @@ namespace akaUdon
                         diceMesh[i].material.SetColor("_Color", Color.white);
                     }
                     diceMesh[i].material.SetFloat(materialFloatName, dieValues[i]);
-                   
-                    
                 }
                 else
                 {
@@ -382,7 +380,6 @@ namespace akaUdon
             postContestTurn = true;
             if (currentMulti > sum)
             {
-                //ha ha perish
                 displayText.text = player.displayName +" is a liar:\n Bid: ";
                 if (remaining[lastPlayer] - 1 == 0)
                 {
@@ -404,7 +401,6 @@ namespace akaUdon
                     remaining[lastPlayer]--;
                     if (remaining[lastPlayer] == 0)
                     {
-                        // numJoinedPlayers--;
                         postContestTurnPlayer = playingPlayer;
                         _PlayerLeft(player, false);
                     }
@@ -414,7 +410,6 @@ namespace akaUdon
             }
             else
             {
-                //oh god oh fuck
                 displayText.text = player.displayName + " is not a liar:\n Bid: ";
                 player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
                 if (remaining[playingPlayer] - 1 == 0)
@@ -437,7 +432,6 @@ namespace akaUdon
                     remaining[playingPlayer]--;
                     if (remaining[playingPlayer] == 0)
                     {
-                        //numJoinedPlayers--;
                         _PlayerLeft(player, false);
                         postContestTurnPlayer = lastPlayer;
                     }
@@ -577,18 +571,16 @@ namespace akaUdon
                         Log("The player " +player.displayName + " was in the game, but left the instance, removing them from the game");
                         currentPlayers[i] = -1;
                         numJoinedPlayers--;
-                        if (playingPlayer == i)
-                        {
-                            NextTurn();
-                        }
-                        if (numJoinedPlayers == 1)
-                        {
-                            numJoinedPlayers = 0;
-                            NextTurn();
-                        }
-
-                        if (serialize)
-                        {
+                        if(serialize){
+                            if (playingPlayer == i) 
+                            {
+                                NextTurn();
+                            } 
+                            if (numJoinedPlayers == 1) 
+                            {
+                                numJoinedPlayers = 0;
+                                NextTurn(); 
+                            }
                             RequestSerialization();
                             AllDeserialization();
                         }
