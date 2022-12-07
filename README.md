@@ -42,3 +42,5 @@ The winner of the game is the last player to have any dice remaining.
 - Implement reset button in UI for playing players
 - Implement easy language switching system
 - Remove benign errors in console.
+- large dice table prefab
+- selector script does not fire if tracking ball exits from bottom.
