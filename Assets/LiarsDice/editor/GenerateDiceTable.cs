@@ -20,6 +20,8 @@ namespace akaUdon
             PrefabUtility.InstantiatePrefab(tablePrefab as GameObject);
             
         }
+        
+        [MenuItem("Window/Liar's Dice Table/Github Page")]
 
         [MenuItem("Window/Liar's Dice Table/Generate Table with Logger")]
         public static void GenerateDiceTableWithLogger()
