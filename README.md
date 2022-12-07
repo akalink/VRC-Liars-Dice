@@ -1,7 +1,7 @@
 # VRC-Liars-Dice
-VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is also known as Doubting Dice, Perudo, Mexacali, Call My Bluff, Pirates Dice, and Deception Dice. The rules are outlined below. 
+VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is also known as Doubting Dice, Perudo, Mexacali, Call My Bluff, Pirates Dice, and Deception Dice. The instaltion and the rules are outlined below. 
 
-[![Discord Invite](/image%20files/2111370.png)](https://discord.gg/u4SNU3eRrd)
+[![Discord Invite](/image%20files/2111370.png)](https://discord.gg/u4SNU3eRrd) akalink's discord server.
 
 ## Dependencies
 - UdonSharp 1.0 (download from the [VRC Creator Companion](https://vcc.docs.vrchat.com/))
