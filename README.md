@@ -4,7 +4,7 @@ VRC Liars Dice is a prefab for playing the classic game Liar's Dice, the game is
 - UdonSharp 1.0 (download from the VRC Creator Companion)
 
 
-## Instal Instructions
+## Install Instructions
 1. Download the most recent release (download link is to the right)
 2. Import the Unity Package into your World Unity Project
 3. Import the Liars Dice Prefab into your scene **OR** generate using Window -> Liar's Dice Table -> Generate Only Table
@@ -41,3 +41,6 @@ The winner of the game is the last player to have any dice remaining.
 - Codesmell - reduce cognitive complexity of various methods
 - Implement reset button in UI for playing players
 - Implement easy language switching system
+- Remove benign errors in console.
+- large dice table prefab
+- selector script does not fire if tracking ball exits from bottom.

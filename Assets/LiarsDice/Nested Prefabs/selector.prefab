@@ -26,7 +26,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 611686254847319576}
-  m_LocalRotation: {x: -0.06141945, y: 0.06141945, z: 0.7044343, w: 0.7044343}
+  m_LocalRotation: {x: -0.061419368, y: 0.061419375, z: 0.70443434, w: 0.7044343}
   m_LocalPosition: {x: 0.408, y: 0.863, z: 0.102}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -57,7 +57,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 611686254847319583}
   behavior: {fileID: 0}
   methodName: _Join
-  log: {fileID: 0}
+  pushInMethod: _DepressedClickSound
 --- !u!114 &611686254847319583
 MonoBehaviour:
   m_ObjectHideFlags: 0

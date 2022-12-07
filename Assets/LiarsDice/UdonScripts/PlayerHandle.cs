@@ -216,6 +216,8 @@ namespace akaUdon
         public void _LeaveSetter()
         {
             if (owner != null) { Log(owner.displayName + " the owner of station #" + stationNum + " is abandoning the station"); }
+
+            if (task != 0) { task = 0;}
             owner = null;
             joinUi.SetActive(true);
             leaveUi.SetActive(false);
