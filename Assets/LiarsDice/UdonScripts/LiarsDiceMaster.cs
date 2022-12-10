@@ -210,7 +210,7 @@ namespace akaUdon
 
         public void _InitializeGame()
         {
-            if (Networking.IsMaster)
+            if (Networking.IsOwner(gameObject))
             {
                 Log("Starting new game with " + numJoinedPlayers + " number of players");
                 gameStarted = true;
@@ -224,7 +224,7 @@ namespace akaUdon
         }
         public void _NewRound()
         {
-            if (Networking.IsMaster)
+            if (Networking.IsOwner(gameObject))
             {
                 Randomize();
                 SendCustomNetworkEvent(NetworkEventTarget.All, nameof(DiceRollSound));
@@ -241,7 +241,7 @@ namespace akaUdon
 
         public void _ReceiveBid(int multi, int die)
         {
-            if (Networking.IsMaster)
+            if (Networking.IsOwner(gameObject))
             {
                 currentMulti = multi;
                 currentDie = die;
@@ -258,7 +258,7 @@ namespace akaUdon
         {
             
             Log("passed in previous player is index " + lastPlayer);
-            if (Networking.IsMaster)
+            if (Networking.IsOwner(gameObject))
             {
                 int next = lastPlayer;
                 if (!postContestTurn && remaining[next] > 0)
@@ -396,7 +396,7 @@ namespace akaUdon
 
                 postContestTurnPlayer = lastPlayer;
                 LiarFoundSound();
-                if (Networking.IsMaster)
+                if (Networking.IsOwner(gameObject))
                 {
                     remaining[lastPlayer]--;
                     if (remaining[lastPlayer] == 0)
@@ -427,7 +427,7 @@ namespace akaUdon
 
                 postContestTurnPlayer = playingPlayer;
                 TruthFoundSound();
-                if (Networking.IsMaster)
+                if (Networking.IsOwner(gameObject))
                 {
                     remaining[playingPlayer]--;
                     if (remaining[playingPlayer] == 0)
@@ -441,7 +441,7 @@ namespace akaUdon
            
             diceLeft--; //corrects number of dice left because _turnStart (the data given to the next player) is run before deseralization.
 
-            if (Networking.IsMaster)
+            if (Networking.IsOwner(gameObject))//Networking.IsMaster)
             {
                 currentDie = -1;
                 currentMulti = 1;
@@ -455,11 +455,11 @@ namespace akaUdon
         }
 
         private void Randomize() 
-        {
-            if (!Networking.IsMaster && gameStarted)
+        {//random12
+            /*if (!Networking.IsMaster && gameStarted)
             {
                 return;
-            }
+            }*/
 
             for (int i = 0; i < dieValues.Length; i++)
             {
@@ -514,7 +514,7 @@ namespace akaUdon
         public void _AddPlayerToGame(VRCPlayerApi player, int playerNum)
         {
             Log("The player " + player.displayName + " has requested to join the game");
-            if (Networking.IsMaster && Utilities.IsValid(player) && !gameStarted)
+            if (Networking.IsOwner(gameObject) && Utilities.IsValid(player) && !gameStarted)
             {
                 
                 foreach (int id in currentPlayers) // check if already assigned
@@ -541,7 +541,7 @@ namespace akaUdon
         public void _RemovePlayerFromGame(VRCPlayerApi player)
         {
             Log("The player " + player.displayName + " has requested to be removed from the game");
-            if (Networking.IsMaster && Utilities.IsValid(player))
+            if (Networking.IsOwner(gameObject) && Utilities.IsValid(player))
             {
                 Log("Removing player " + player.displayName);
                 for (int i = 0; i < currentPlayers.Length; i++)
@@ -562,7 +562,7 @@ namespace akaUdon
 
         public void _PlayerLeft(VRCPlayerApi player, bool serialize)
         {
-            if (Networking.IsMaster && Utilities.IsValid(player))
+            if (Networking.IsOwner(gameObject) && Utilities.IsValid(player))
             {
                 for (int i = 0; i < currentPlayers.Length; i++)
                 {
