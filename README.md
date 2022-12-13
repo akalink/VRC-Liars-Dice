@@ -39,12 +39,13 @@ The winner of the game is the last player to have any dice remaining.
 - [🧝‍](https://github.com/orels1) orels1: TMP Billboard Shader
 - [🧙](https://github.com/MerlinVR/UdonSharp) Merlin: UdonSharp
 - [😼](https://github.com/Centauri2442) Centauri: General Help/Feedback/Testing
+- [😺](https://github.com/Metamaniac) Table: Compression Optimization
 
 
 ### Future plans
 - Codesmell - reduce cognitive complexity of various methods
 - Implement reset button in UI for playing players
 - Implement easy language switching system
-- Remove benign errors in console.
+- Remove benign errors in console. (Not an issues in new project apparently)
 - large dice table prefab
 - selector script does not fire if tracking ball exits from bottom.
