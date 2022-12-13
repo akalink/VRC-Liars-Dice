@@ -25,9 +25,7 @@ namespace akaUdon
             Nothing is initalized until table is interacted with 
             */
         #region Instance Variables
-        
-        //todo fix issue where defeated players can still play
-        
+
         [UdonSynced()] private int[] dieValues = new int[20];
         [UdonSynced()] private int[] remaining = new int[4]; //stretch goal, make these modular, no magic numbers
         private Renderer[] diceMesh; 
@@ -47,8 +45,8 @@ namespace akaUdon
         private bool canInteract = false;
         private int diceLeft;
 
-        public TextMeshProUGUI displayText;
-        public TextMeshProUGUI rulesText;
+        [SerializeField] private TextMeshProUGUI displayText;
+        [SerializeField] private TextMeshProUGUI rulesText;
         private String oldMessage;
         private PlayerHandle[] playerHandles;
         private int rulesIndex = 0;
@@ -58,7 +56,7 @@ namespace akaUdon
         private readonly string[] rules = new string[10]
         {
             "",
-            "To begin each round, all players roll their dice simultaneously.",
+            "<color=#"+ColorUtility.ToHtmlStringRGB(Color.red)+">"+"To begin each round, all players roll their dice simultaneously.",
             "Each player looks at their own dice after they roll, keeping them hidden from the other players.",
             "The first player then states a bid consisting of a face (\"1's\", \"5's\", etc.) and a quantity.",
             "The quantity represents the player's guess as to how many of each face have been rolled by all the players at the table, including themselves. For example, a player might bid \"five 2's.\"",
@@ -68,6 +66,7 @@ namespace akaUdon
             "The loser of the previous round begins the next round.",
             "The winner of the game is the last player to have any dice remaining."
         };
+        private readonly string white = "<color=#FFFFFF>";
     
 
         #region AudioClips
@@ -191,13 +190,7 @@ namespace akaUdon
         {
             return gameStarted;
         }
-
-        /*public void _ContinueGame()
-        {
-            if(!canInteract){return;}
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(_NewRound));
-        }*/
-
+        
         public bool _GetCanInteract()
         {
             return canInteract;
@@ -260,25 +253,11 @@ namespace akaUdon
             Log("passed in previous player is index " + lastPlayer);
             if (Networking.IsOwner(gameObject))
             {
-                int next = lastPlayer;
-                if (!postContestTurn && remaining[next] > 0)
-                {
-                    do
-                    {
-                        next++;
-                        if (next >= currentPlayers.Length)
-                        {
-                            next = 0;
-                        }
-                    } while (currentPlayers[next] == -1 || remaining[next] < 1);
-
-                    Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " +
-                        numJoinedPlayers);
-                }
+                int next = ReturnNextUser(lastPlayer);
 
                 postContestTurn = false;
 
-                if (numJoinedPlayers <= 1 )//|| playingPlayer == next)
+                if (numJoinedPlayers <= 1 )
                 {
                     gameStarted = false;
                     lastWinner = currentPlayers[playingPlayer];
@@ -311,6 +290,24 @@ namespace akaUdon
             }
         }
 
+        private int ReturnNextUser(int next)
+        {
+            if (!postContestTurn && remaining[next] > 0)
+            {
+                do 
+                { 
+                    next++; 
+                    if (next >= currentPlayers.Length) 
+                    { 
+                        next = 0;
+                    }
+                } while (currentPlayers[next] == -1 || remaining[next] < 1);
+                
+                Log("Next player id is " + next + " old one is " + playingPlayer + " numJoinedPlayer is " + numJoinedPlayers);
+            }
+            return next;
+        }
+
         public void GameEndSound()
         {
             if (audioState && gameEndSfx != null && speaker != null)
@@ -330,71 +327,20 @@ namespace akaUdon
             
         }
         
-
         public void _PlayerContests()
         {
-            int lastPlayer = playingPlayer;
-
-            do
-            {
-                lastPlayer--;
-                if (lastPlayer < 0)
-                {
-                    lastPlayer = currentPlayers.Length - 1;
-                }
-            } while (currentPlayers[lastPlayer] == -1);
+            int lastPlayer = ReturnLastPlayer(playingPlayer);
             
-
-            int sum = 0;
-            for (int i = 0; i < dieValues.Length; i++)
-            {
-                int playerNum = i / 5;
-                if (i < playerHandles.Length && currentPlayers[i] != -1)
-                {
-                    playerHandles[i]._ContinueState(true);
-                }
-                if (currentPlayers[playerNum] == -1) { continue; }
-                
-                
-                if ((i % 5 + 1) <= remaining[playerNum])
-                {
-                    if (dieValues[i] == currentDie || (onesWild && !onesInvalid && dieValues[i] == 0))
-                    {
-                        sum++;
-                        diceMesh[i].material.SetColor("_Color", Color.cyan);
-                    }
-                    else
-                    {
-                        diceMesh[i].material.SetColor("_Color", Color.white);
-                    }
-                    diceMesh[i].material.SetFloat(materialFloatName, dieValues[i]);
-                }
-                else
-                {
-                    diceMesh[i].material.SetFloat(materialFloatName, 7);
-                }
-            }
+            int sum = CalcSumShowDice();
+            
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[lastPlayer]);
             
             String lossPlayer;
             postContestTurn = true;
             if (currentMulti > sum)
             {
-                displayText.text = player.displayName +" is a liar:\n Bid: ";
-                if (remaining[lastPlayer] - 1 == 0)
-                {
-                    lossPlayer = "\n" + player.displayName + " has been eliminated";
-                    if (player == Networking.LocalPlayer)
-                    {
-                        canInteract = false;
-                    }
-                }
-                else
-                {
-                    lossPlayer = "\n" + player.displayName + " losses a dice";
-                }
-
-                postContestTurnPlayer = lastPlayer;
+                displayText.text =_ReturnPlayerColor(player)+ player.displayName + white+" is a liar:\n Bid: ";
+                lossPlayer = ProcessALosingPlayer(lastPlayer, player);
                 LiarFoundSound();
                 if (Networking.IsOwner(gameObject))
                 {
@@ -404,28 +350,14 @@ namespace akaUdon
                         postContestTurnPlayer = playingPlayer;
                         _PlayerLeft(player, false);
                     }
-
                     playingPlayer = lastPlayer;
                 }
             }
             else
             {
-                displayText.text = player.displayName + " is not a liar:\n Bid: ";
+                displayText.text = _ReturnPlayerColor(player)+ player.displayName + white+" is not a liar:\n Bid: ";
                 player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
-                if (remaining[playingPlayer] - 1 == 0)
-                {
-                    lossPlayer = "\n" + player.displayName + " has been eliminated";
-                    if (player == Networking.LocalPlayer)
-                    {
-                        canInteract = false;
-                    }
-                }
-                else
-                {
-                    lossPlayer = "\n" + player.displayName + " losses a dice";
-                }
-
-                postContestTurnPlayer = playingPlayer;
+                lossPlayer = ProcessALosingPlayer(playingPlayer, player);
                 TruthFoundSound();
                 if (Networking.IsOwner(gameObject))
                 {
@@ -454,19 +386,80 @@ namespace akaUdon
             }
         }
 
-        private void Randomize() 
-        {//random12
-            /*if (!Networking.IsMaster && gameStarted)
+        private int ReturnLastPlayer(int lastPlayer)
+        {
+            do
             {
-                return;
-            }*/
+                lastPlayer--;
+                if (lastPlayer < 0)
+                {
+                    lastPlayer = currentPlayers.Length - 1;
+                }
+            } while (currentPlayers[lastPlayer] == -1);
 
+            return lastPlayer;
+        }
+
+        private int CalcSumShowDice()
+        {
+            int sum = 0;
+            for (int i = 0; i < dieValues.Length; i++)
+            {
+                int playerNum = i / 5; 
+                if (i < playerHandles.Length && currentPlayers[i] != -1) 
+                { 
+                    playerHandles[i]._ContinueState(true); 
+                } 
+                if (currentPlayers[playerNum] == -1) { continue; }
+                
+                if ((i % 5 + 1) <= remaining[playerNum])
+                { 
+                    if (dieValues[i] == currentDie || (onesWild && !onesInvalid && dieValues[i] == 0)) 
+                    { 
+                        sum++; 
+                        diceMesh[i].material.SetColor("_Color", Color.cyan); 
+                    }
+                    else 
+                    { 
+                        diceMesh[i].material.SetColor("_Color", Color.white); 
+                    } 
+                    diceMesh[i].material.SetFloat(materialFloatName, dieValues[i]); 
+                }
+                else 
+                { 
+                    diceMesh[i].material.SetFloat(materialFloatName, 7); 
+                } 
+            }
+            
+            return sum;
+        }
+
+        private string ProcessALosingPlayer(int losingPlayer, VRCPlayerApi player)
+        {
+            string info;
+            if (remaining[losingPlayer] - 1 == 0)
+            {
+                info = "\n" + _ReturnPlayerColor(player) +player.displayName + white+ " has been eliminated";
+                if (player == Networking.LocalPlayer)
+                {
+                    canInteract = false;
+                }
+            }
+            else
+            {
+                info = "\n" +_ReturnPlayerColor(player) + player.displayName + white+" losses a dice";
+            }
+
+            postContestTurnPlayer = losingPlayer;
+            return info;
+        }
+
+        private void Randomize() 
+        {
             for (int i = 0; i < dieValues.Length; i++)
             {
                 dieValues[i] = Random.Range(0, 5);
             }
-            
-
         }
 
         public void DiceRollSound()
@@ -599,6 +592,23 @@ namespace akaUdon
 
         #region manual network update
 
+        public string _ReturnPlayerColor(VRCPlayerApi player)
+        {
+            return _ReturnPlayerColor(player.displayName);
+        }
+        
+        private string _ReturnPlayerColor(string player)
+        {
+            float hc = Math.Abs((float)(player.GetHashCode() % 1000) / 1000);
+            Color p = Color.HSVToRGB(hc, 1 ,1);
+            int r = (int)Math.Floor(Math.Sqrt(p.r*255));
+            int g = (int)Math.Sqrt(p.g*255);
+            int b = (int)Math.Sqrt(p.b*255);
+            string cu = r.ToString("X") + r.ToString("X") + g.ToString("X")+ g.ToString("X")+ b.ToString("X") + b.ToString("X");// + Convert.ToString(r, 16) + Convert.ToString(g, 16) + Convert.ToString(g, 16) + Convert.ToString(b, 16) + Convert.ToString(b, 16);
+            Log("Player color is " + cu + " or " + r.ToString() + " Converion " + Convert.ToString(15,16) + " Hashcode math = " + hc);
+            return "<color=#"+cu +">";
+        }
+
         public override void OnDeserialization()
         {
             AllDeserialization();
@@ -701,7 +711,7 @@ namespace akaUdon
                 if (playingPlayer != -1)
                 {
                     VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
-                    displayText.text = player.displayName + "'s turn\n";
+                    displayText.text = _ReturnPlayerColor(player)+player.displayName + "'s" + white +" turn\n";
                 }
                 
                 displayText.text +=currentMulti.ToString() + " X " + (currentDie+1)  + " die";
@@ -720,7 +730,8 @@ namespace akaUdon
             else if(gameStarted && playingPlayer != -1)
             {
                 VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
-                displayText.text = player.displayName + "\n starts the round";
+
+                displayText.text = _ReturnPlayerColor(player) +player.displayName + "\n "+white+ "starts the round";
                 if (onesWild)
                 {
                     if (!onesInvalid)
@@ -737,7 +748,7 @@ namespace akaUdon
             if (!gameStarted && lastWinner != -1)
             {
                 VRCPlayerApi player = VRCPlayerApi.GetPlayerById(lastWinner);
-                displayText.text = player.displayName + " is the Winner";
+                displayText.text = _ReturnPlayerColor(player)+player.displayName +white + " is the Winner";
             }
 
             oldMessage = displayText.text;

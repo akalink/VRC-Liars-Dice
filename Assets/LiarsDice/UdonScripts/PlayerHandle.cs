@@ -173,7 +173,7 @@ namespace akaUdon
         {
             if (owner != null)
             {
-                playerNameDisplay.text = owner.displayName;
+                playerNameDisplay.text = diceMaster._ReturnPlayerColor(owner) +owner.displayName;
             }
             else
             {
