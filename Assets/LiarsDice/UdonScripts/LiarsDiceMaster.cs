@@ -28,6 +28,7 @@ namespace akaUdon
 
         [UdonSynced()] private int[] dieValues = new int[20];
         [UdonSynced()] private int[] remaining = new int[4]; //stretch goal, make these modular, no magic numbers
+        private int diceLeft;
         private Renderer[] diceMesh; 
         [SerializeField] private string materialFloatName = "_frame";
         [UdonSynced()] private int[] currentPlayers = new int[4];
@@ -43,20 +44,20 @@ namespace akaUdon
         [SerializeField] private GameObject onesWildStateVisual;
         private bool onesInvalid = false;
         private bool canInteract = false;
-        private int diceLeft;
+        
 
         [SerializeField] private TextMeshProUGUI displayText;
         [SerializeField] private TextMeshProUGUI rulesText;
         private String oldMessage;
         private PlayerHandle[] playerHandles;
         private int rulesIndex = 0;
-        [SerializeField] private PositionTracker positionTracker;
+        [SerializeField] private akaUdon.PositionTracker positionTracker;
         [SerializeField] private ProximityEnable proximityEnable;
 
         private readonly string[] rules = new string[10]
         {
             "",
-            "<color=#"+ColorUtility.ToHtmlStringRGB(Color.red)+">"+"To begin each round, all players roll their dice simultaneously.",
+            "To begin each round, all players roll their dice simultaneously.",
             "Each player looks at their own dice after they roll, keeping them hidden from the other players.",
             "The first player then states a bid consisting of a face (\"1's\", \"5's\", etc.) and a quantity.",
             "The quantity represents the player's guess as to how many of each face have been rolled by all the players at the table, including themselves. For example, a player might bid \"five 2's.\"",
@@ -139,7 +140,7 @@ namespace akaUdon
 
         public void OnesWildNetwork()
         {
-            if (!gameStarted && Networking.LocalPlayer.isMaster)
+            if (!gameStarted && Networking.LocalPlayer.IsOwner(gameObject))
             {
                 onesWild = !onesWild;
                 RequestSerialization();
@@ -339,7 +340,7 @@ namespace akaUdon
             postContestTurn = true;
             if (currentMulti > sum)
             {
-                displayText.text =_ReturnPlayerColor(player)+ player.displayName + white+" is a liar:\n Bid: ";
+                displayText.text =_ReturnPlayerColor(player) + white+" is a liar:\n Bid: ";
                 lossPlayer = ProcessALosingPlayer(lastPlayer, player);
                 LiarFoundSound();
                 if (Networking.IsOwner(gameObject))
@@ -355,7 +356,7 @@ namespace akaUdon
             }
             else
             {
-                displayText.text = _ReturnPlayerColor(player)+ player.displayName + white+" is not a liar:\n Bid: ";
+                displayText.text = _ReturnPlayerColor(player) + white+" is not a liar:\n Bid: ";
                 player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
                 lossPlayer = ProcessALosingPlayer(playingPlayer, player);
                 TruthFoundSound();
@@ -439,7 +440,7 @@ namespace akaUdon
             string info;
             if (remaining[losingPlayer] - 1 == 0)
             {
-                info = "\n" + _ReturnPlayerColor(player) +player.displayName + white+ " has been eliminated";
+                info = "\n" + _ReturnPlayerColor(player) + white+ " has been eliminated";
                 if (player == Networking.LocalPlayer)
                 {
                     canInteract = false;
@@ -447,7 +448,7 @@ namespace akaUdon
             }
             else
             {
-                info = "\n" +_ReturnPlayerColor(player) + player.displayName + white+" losses a dice";
+                info = "\n" +_ReturnPlayerColor(player) + white+" losses a dice";
             }
 
             postContestTurnPlayer = losingPlayer;
@@ -520,12 +521,12 @@ namespace akaUdon
                         AllDeserialization();
                         return;
                     }
+                    
                 }
                 
                 Log("Adding " + player.displayName + " to the game");
                 numJoinedPlayers++;
                 currentPlayers[playerNum] = player.playerId;
-
                 RequestSerialization();
                 AllDeserialization();
             }
@@ -605,8 +606,8 @@ namespace akaUdon
             int g = (int)Math.Sqrt(p.g*255);
             int b = (int)Math.Sqrt(p.b*255);
             string cu = r.ToString("X") + r.ToString("X") + g.ToString("X")+ g.ToString("X")+ b.ToString("X") + b.ToString("X");// + Convert.ToString(r, 16) + Convert.ToString(g, 16) + Convert.ToString(g, 16) + Convert.ToString(b, 16) + Convert.ToString(b, 16);
-            Log("Player color is " + cu + " or " + r.ToString() + " Converion " + Convert.ToString(15,16) + " Hashcode math = " + hc);
-            return "<color=#"+cu +">";
+            Log("Player color is " + cu +  " Normalize Hashcode is: " + hc);
+            return "<color=#"+cu +">"+player;
         }
 
         public override void OnDeserialization()
@@ -711,7 +712,7 @@ namespace akaUdon
                 if (playingPlayer != -1)
                 {
                     VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
-                    displayText.text = _ReturnPlayerColor(player)+player.displayName + "'s" + white +" turn\n";
+                    displayText.text = _ReturnPlayerColor(player) + "'s" + white +" turn\n";
                 }
                 
                 displayText.text +=currentMulti.ToString() + " X " + (currentDie+1)  + " die";
@@ -731,7 +732,7 @@ namespace akaUdon
             {
                 VRCPlayerApi player = VRCPlayerApi.GetPlayerById(currentPlayers[playingPlayer]);
 
-                displayText.text = _ReturnPlayerColor(player) +player.displayName + "\n "+white+ "starts the round";
+                displayText.text = _ReturnPlayerColor(player) + "\n "+white+ "starts the round";
                 if (onesWild)
                 {
                     if (!onesInvalid)
@@ -748,7 +749,7 @@ namespace akaUdon
             if (!gameStarted && lastWinner != -1)
             {
                 VRCPlayerApi player = VRCPlayerApi.GetPlayerById(lastWinner);
-                displayText.text = _ReturnPlayerColor(player)+player.displayName +white + " is the Winner";
+                displayText.text = _ReturnPlayerColor(player)+white + " is the Winner";
             }
 
             oldMessage = displayText.text;

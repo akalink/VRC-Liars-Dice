@@ -45,7 +45,7 @@ namespace akaUdon
         #region InitializeAllTheThings
         void Start()
         {
-            Log("Beging Initialization");
+            Log("Beginning Initialization");
             collision = GetComponent<Collider>();
             
             if (Networking.LocalPlayer == null)

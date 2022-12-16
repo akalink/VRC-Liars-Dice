@@ -16,6 +16,7 @@ namespace akaUdon
         [SerializeField] private string methodName = "";
         [SerializeField] private string pushInMethod = "_DepressedClickSoundAll";
         private readonly string handTrackerName = "trackhand12345";
+        private VRCPlayerApi localPlayer;
         private bool inVR;
         private Collider collider;
         private Animator anim;
@@ -25,7 +26,8 @@ namespace akaUdon
         {
             anim = GetComponentInParent<Animator>();
             collider = GetComponent<Collider>();
-            inVR = Networking.LocalPlayer.IsUserInVR();
+            localPlayer = Networking.LocalPlayer;
+            inVR = localPlayer.IsUserInVR();
             collider.enabled = inVR;
             gameObject.SetActive(inVR);
         }
@@ -46,11 +48,11 @@ namespace akaUdon
                 if(behavior != null){behavior.SendCustomEvent(pushInMethod);}
                 if (other.gameObject.name.Contains("L"))
                 {
-                    Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.5f, Single.MaxValue, 0.2f);
+                    localPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.5f, Single.MaxValue, 0.2f);
                 }
                 else
                 {
-                    Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.5f, Single.MaxValue, 0.2f);
+                    localPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.5f, Single.MaxValue, 0.2f);
                 }
             }
         }
@@ -63,11 +65,11 @@ namespace akaUdon
                 if(anim != null){anim.SetBool(methodName, false);}
                 if (other.gameObject.name.Contains("L"))
                 {
-                    Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.5f, Single.MaxValue, 0.5f);
+                    localPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.5f, Single.MaxValue, 0.5f);
                 }
                 else
                 {
-                    Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.5f, Single.MaxValue, 0.5f);
+                    localPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.5f, Single.MaxValue, 0.5f);
                 }
             }
         }

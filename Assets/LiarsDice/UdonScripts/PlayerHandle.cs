@@ -25,6 +25,7 @@ namespace akaUdon
         private int stationNum;
         private bool yourTurn = false;
         private VRCPlayerApi owner;
+        private VRCPlayerApi localPlayer;
         private LiarsDiceMaster diceMaster;
         [UdonSynced()]private int multiNum = 1;
         private int min = 1;
@@ -90,7 +91,8 @@ namespace akaUdon
             
             Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
             Debug.Log("Temp colliders length = "+tempColliders.Length);
-            bool inVR = Networking.LocalPlayer.IsUserInVR();
+            localPlayer = Networking.LocalPlayer;
+            bool inVR = localPlayer.IsUserInVR();
             fingerColliders = new Collider[tempColliders.Length - 2];
             
             
@@ -125,7 +127,7 @@ namespace akaUdon
         public void _SetCollisionState(bool state)
         {
             if(canvasCollider != null){canvasCollider.enabled = state;}
-            if (fingerColliders != null && Networking.LocalPlayer.IsUserInVR())
+            if (fingerColliders != null && localPlayer.IsUserInVR())
             {
                 foreach (Collider c in fingerColliders)
                 {
@@ -141,7 +143,7 @@ namespace akaUdon
         {
             //Log("Canvas should be "+ state +", but selectors should be " + !state);//this log has been commented out because it can spam the logger making it harder to use.
             if(canvasCollider != null) {canvasCollider.enabled = state;}
-            if (fingerColliders != null && Networking.LocalPlayer.IsUserInVR())
+            if (fingerColliders != null && localPlayer.IsUserInVR())
             {
                 foreach (Collider c in fingerColliders)
                 {
@@ -173,7 +175,7 @@ namespace akaUdon
         {
             if (owner != null)
             {
-                playerNameDisplay.text = diceMaster._ReturnPlayerColor(owner) +owner.displayName;
+                playerNameDisplay.text = diceMaster._ReturnPlayerColor(owner);
             }
             else
             {
@@ -311,7 +313,7 @@ namespace akaUdon
 
         public void _DepressedClickSoundOwner()
         {
-            if (owner == Networking.LocalPlayer)
+            if (owner == localPlayer)
             {
                 _LocalClickSound(0.7f);
             }
@@ -319,7 +321,7 @@ namespace akaUdon
 
         public void _DepressedClickSoundOwnerTurn()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _LocalClickSound(0.7f);
             }
@@ -341,7 +343,7 @@ namespace akaUdon
         
         public void _DepressedAltClickSoundOwnerTurn()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(0.7f);
             }
@@ -350,7 +352,7 @@ namespace akaUdon
 
         private void TurnNotificationSound()
         {
-            if (audioState && Networking.LocalPlayer == owner && turnNotificationSfx != null && speaker != null)
+            if (audioState && localPlayer == owner && turnNotificationSfx != null && speaker != null)
             {
                 speaker.pitch = 1f;
                 speaker.clip = turnNotificationSfx;
@@ -432,7 +434,7 @@ namespace akaUdon
         #region Pre-Game Buttons
         public void _StartGame()
         {
-            if ( interactDelay && owner == Networking.LocalPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
+            if ( interactDelay && owner == localPlayer && diceMaster._GetCanInteract() && diceMaster._GetNumJoinedPlayers() > 1)
             {
                 Log("You have clicked the start button");
                 if(yourTurn){_LocalClickSound(1f);}
@@ -456,7 +458,7 @@ namespace akaUdon
             if (interactDelay && owner == null && !diceMaster._GetGameStarted())
             {
                 Log("You have requested to join the game on station #" + stationNum);
-                Networking.SetOwner(Networking.LocalPlayer, gameObject);
+                Networking.SetOwner(localPlayer, gameObject);
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
                 _LocalClickSound(1.1f);
@@ -468,7 +470,7 @@ namespace akaUdon
 
         public void _Leave()
         {
-            if (interactDelay && owner == Networking.LocalPlayer)
+            if (interactDelay && owner == localPlayer)
             {
                 Log("You have requested to leave the game");
                 interactDelay = false;
@@ -488,7 +490,7 @@ namespace akaUdon
 
         public void _Submit()
         {
-            if (interactDelay && owner == Networking.LocalPlayer && yourTurn)
+            if (interactDelay && owner == localPlayer && yourTurn)
             {
                 if (dieNumber < 0) { return;}
                 
@@ -518,7 +520,7 @@ namespace akaUdon
         #region In-Game Buttons
         public void _Contest() //Call it button
         {
-            if (interactDelay && owner == Networking.LocalPlayer && yourTurn && firstTurnFlag > -1)
+            if (interactDelay && owner == localPlayer && yourTurn && firstTurnFlag > -1)
             {
                 interactDelay = false;
                 SendCustomEventDelayedFrames(nameof(_InteractionDelay), 30);
@@ -531,7 +533,7 @@ namespace akaUdon
         }
         public void _ContinueGame()
         {
-            if (interactDelay && owner == Networking.LocalPlayer)
+            if (interactDelay && owner == localPlayer)
             {
                 if(yourTurn){_LocalClickSound(1f);}
                 interactDelay = false;
@@ -545,7 +547,7 @@ namespace akaUdon
 
         // public void _Reset() never used, might user later
         // {
-        //     if (owner == Networking.LocalPlayer && yourTurn)
+        //     if (owner == localPlayer && yourTurn)
         //     {
         //         multiNum = min;
         //         HighLightButton(prevDieNumber); //I think this is right
@@ -555,7 +557,7 @@ namespace akaUdon
         
         public void _Add()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 NumberCalc(1);
             }
@@ -563,7 +565,7 @@ namespace akaUdon
 
         public void _Subtract()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 NumberCalc(-1);
             }
@@ -572,7 +574,7 @@ namespace akaUdon
         #region number buttons
 
         public void _ChooseOne() {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1f);
                 dieNumber = 0;
@@ -582,7 +584,7 @@ namespace akaUdon
         
         public void _ChooseTwo()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1.1f);
                 dieNumber = 1;
@@ -592,7 +594,7 @@ namespace akaUdon
         
         public void _ChooseThree()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1.2f);
                 dieNumber = 2;
@@ -602,7 +604,7 @@ namespace akaUdon
         
         public void _ChooseFour()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1.3f);
                 dieNumber = 3;
@@ -612,7 +614,7 @@ namespace akaUdon
         
         public void _ChooseFive()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1.4f);
                 dieNumber = 4;
@@ -622,7 +624,7 @@ namespace akaUdon
         
         public void _ChooseSix()
         {
-            if (owner == Networking.LocalPlayer && yourTurn)
+            if (owner == localPlayer && yourTurn)
             {
                 _AltClickSound(1.5f);
                 dieNumber = 5;
