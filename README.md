@@ -43,9 +43,23 @@ The winner of the game is the last player to have any dice remaining.
 
 
 ### Future plans
-- Codesmell - reduce cognitive complexity of various methods
 - Implement reset button in UI for playing players
 - Implement easy language switching system
 - Remove benign errors in console. (Not an issues in new project apparently)
 - large dice table prefab
 - selector script does not fire if tracking ball exits from bottom.
+
+# PatchNotes:
+
+### 0.03:
+- Added system that converts player's usernames to a color to add color to ui text fields.
+- Refactored very large methods to split them up into smaller methods to increase readability.
+- PlayerHandle script now caches Networking.LocalPlayer.
+
+
+### 0.02:
+- IsMaster calls changed to IsOwner(gameObject) calls.
+- FileSize of image files are now smaller.
+
+### 0.01:
+- First public release.
