@@ -313,7 +313,6 @@ namespace akaUdon
         {
             if (audioState && gameEndSfx != null && speaker != null)
             {
-                speaker.pitch = 1f;
                 speaker.clip = gameEndSfx;
                 speaker.Play();
             }
@@ -485,7 +484,6 @@ namespace akaUdon
         {
             if (audioState && LiarContestSfx != null && speaker != null)
             {
-                speaker.pitch = 1f;
                 speaker.clip = LiarContestSfx;
                 speaker.Play();
             }
@@ -495,7 +493,6 @@ namespace akaUdon
         {
             if (audioState && TruthContestSfx != null && speaker != null)
             {
-                speaker.pitch = 1f;
                 speaker.clip = TruthContestSfx;
                 speaker.Play();
             }

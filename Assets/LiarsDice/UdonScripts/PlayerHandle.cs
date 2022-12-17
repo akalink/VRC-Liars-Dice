@@ -22,17 +22,18 @@ namespace akaUdon
         #region Instance Variables
 
         [UdonSynced()] private int task = 0; //0: do nothing, 1: claim station, 2: leave station, 3: submit dice, 4: contests bid, 5: starts the game, 6: continues the game, 7: leave playing game
-        private int stationNum;
-        private bool yourTurn = false;
-        private VRCPlayerApi owner;
-        private VRCPlayerApi localPlayer;
-        private LiarsDiceMaster diceMaster;
+        private int stationNum; //this stations position on the array of PlayerHandles
+        private VRCPlayerApi owner; //The person who is playing a game at this station
+        private VRCPlayerApi localPlayer; 
+        private LiarsDiceMaster diceMaster; //The main udon behavior that handles the game logic.
         [UdonSynced()]private int multiNum = 1;
         private int min = 1;
         private int max = 20;
-        private int firstTurnFlag = -1;
         [UdonSynced()]private int dieNumber = 6;
         private int prevDieNumber = 6;
+        private bool yourTurn = false;
+        private int firstTurnFlag = -1;
+        
         private bool interactDelay = true;
         
         private Collider canvasCollider;
@@ -88,9 +89,8 @@ namespace akaUdon
 
             logging = diceMaster.logging;
             if (diceMaster.logger != null) { logger = diceMaster.logger; }
-            
+
             Collider[] tempColliders = GetComponentsInChildren<Collider>(true);
-            Debug.Log("Temp colliders length = "+tempColliders.Length);
             localPlayer = Networking.LocalPlayer;
             bool inVR = localPlayer.IsUserInVR();
             fingerColliders = new Collider[tempColliders.Length - 2];
