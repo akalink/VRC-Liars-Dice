@@ -458,7 +458,7 @@ namespace akaUdon
         {
             for (int i = 0; i < dieValues.Length; i++)
             {
-                dieValues[i] = Random.Range(0, 5);
+                dieValues[i] = Random.Range(0, 6);
             }
         }
 

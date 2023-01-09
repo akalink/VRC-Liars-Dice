@@ -49,7 +49,13 @@ The winner of the game is the last player to have any dice remaining.
 - large dice table prefab
 - selector script does not fire if tracking ball exits from bottom.
 
-# PatchNotes:
+# Known Bugs
+- If a player wins by other player forfit (leaving a game via button or leaving instance), the winners panel with have the leave game option, not join game option.
+
+# PatchNotes
+
+### 0.04:
+- Fixed probability so 6's can spawn.
 
 ### 0.03:
 - Added system that converts player's usernames to a color to add color to ui text fields.
